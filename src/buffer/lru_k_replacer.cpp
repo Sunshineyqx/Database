@@ -107,7 +107,36 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
   latch_.unlock();
 }
 
-void LRUKReplacer::Remove(frame_id_t frame_id) {}
+void LRUKReplacer::Remove(frame_id_t frame_id) {
+  latch_.lock();
+  if(node_store_.count(frame_id) == 0U){
+    return;
+  }
+  auto node = node_store_[frame_id];
+  if(!node.is_evictable_){
+    latch_.unlock();
+    throw Exception("not evictable...");
+  }
+  auto k = node.k_;
+  node_store_.erase(frame_id);
+  if(k == k_){
+    for(auto it = node_more_k_.begin(); it != node_more_k_.end(); it++){
+      if(*it == frame_id){
+        node_more_k_.erase(it);
+        break;
+      }
+    }
+  } else{
+    for(auto it = node_less_k_.begin(); it != node_less_k_.end(); it++){
+      if(*it == frame_id){
+        node_less_k_.erase(it);
+        break;
+      }
+    }
+  }
+  curr_size_--;
+  latch_.unlock();
+}
 
 auto LRUKReplacer::Size() -> size_t {
   latch_.lock();
