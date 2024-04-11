@@ -95,6 +95,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
       disk_manager_->WritePage(page.GetPageId(), page.GetData());
       page.is_dirty_ = false;
     }
+    page_table_.erase(page.page_id_);
     page.page_id_ = page_id;
     page.pin_count_ = 1;
     disk_manager_->ReadPage(page_id, page.data_);
