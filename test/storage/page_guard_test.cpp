@@ -35,7 +35,7 @@ TEST(PageGuardTest, SampleTest) {
 
   page_id_t page_id_temp;
   auto *page0 = bpm->NewPage(&page_id_temp);
-  
+
   // test ~ReadGuard
   {
     auto read_page = bpm->FetchPageRead(page_id_temp);

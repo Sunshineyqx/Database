@@ -12,7 +12,6 @@
 
 #include "buffer/buffer_pool_manager.h"
 #include <cstddef>
-#include <mutex>
 
 #include "common/config.h"
 #include "common/exception.h"
@@ -56,7 +55,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
       disk_manager_->WritePage(page.GetPageId(), page.GetData());
       page.is_dirty_ = false;
     }
-    page_table_.erase(page.page_id_); // forget...
+    page_table_.erase(page.page_id_);  // forget...
     page.ResetMemory();
     page.page_id_ = INVALID_PAGE_ID;
     page.pin_count_ = 0;
@@ -66,7 +65,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   // 成功得到某个空页框，设置其元信息
   auto id = AllocatePage();
   *page_id = id;
-  auto& page = pages_[my_frame_id];
+  auto &page = pages_[my_frame_id];
   page.page_id_ = id;
   page.pin_count_ = 1;
   page.is_dirty_ = false;
@@ -134,32 +133,32 @@ auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unus
 auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
   std::lock_guard<decltype(latch_)> lock(latch_);
   // 检查page_id的有效性
-  if(page_id == INVALID_PAGE_ID || page_table_.count(page_id) == 0U){
+  if (page_id == INVALID_PAGE_ID || page_table_.count(page_id) == 0U) {
     return false;
   }
 
   // 无论脏位如何，都要flush
-  auto& page = pages_[page_table_[page_id]];
+  auto &page = pages_[page_table_[page_id]];
   disk_manager_->WritePage(page_id, page.GetData());
   page.is_dirty_ = false;
   return true;
 }
 
 void BufferPoolManager::FlushAllPages() {
-  for(auto& page : page_table_){
+  for (auto &page : page_table_) {
     FlushPage(page.first);
   }
 }
 
-auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool { 
+auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool {
   std::lock_guard<decltype(latch_)> lock(latch_);
   // 如果不在缓冲池里，返回true
-  if (page_table_.count(page_id) == 0U){
+  if (page_table_.count(page_id) == 0U) {
     return true;
   }
 
   // 如果被pin(不能被删除), 返回false
-  if(pages_[page_table_[page_id]].pin_count_ > 0){
+  if (pages_[page_table_[page_id]].pin_count_ > 0) {
     return false;
   }
 
@@ -171,13 +170,13 @@ auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool {
   // 添加回freelist
   free_list_.push_back(cur_frame_id);
   // reset page info
-  auto& page = pages_[cur_frame_id];
+  auto &page = pages_[cur_frame_id];
   page.ResetMemory();
   page.page_id_ = INVALID_PAGE_ID;
   page.is_dirty_ = false;
   page.pin_count_ = 0;
 
-  DeallocatePage(page_id); // more
+  DeallocatePage(page_id);  // more
   return true;
 }
 
