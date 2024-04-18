@@ -20,10 +20,12 @@
 
 #include "gtest/gtest.h"
 
+// make page_guard_test -j8
+// ./test/page_guard_test
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(PageGuardTest, DISABLED_SampleTest) {
+TEST(PageGuardTest, SampleTest) {
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 5;
   const size_t k = 2;
@@ -33,7 +35,31 @@ TEST(PageGuardTest, DISABLED_SampleTest) {
 
   page_id_t page_id_temp;
   auto *page0 = bpm->NewPage(&page_id_temp);
+  
+  // test ~ReadGuard
+  {
+    auto read_page = bpm->FetchPageRead(page_id_temp);
+    EXPECT_EQ(2, page0->GetPinCount());
+  }
+  EXPECT_EQ(1, page0->GetPinCount());
+  // test ReadPageGuard(ReadPageGuard &&that)
+  {
+    auto reader_guard = bpm->FetchPageRead(page_id_temp);
+    auto reader_guard_2 = ReadPageGuard(std::move(reader_guard));
+    EXPECT_EQ(2, page0->GetPinCount());
+  }
+  EXPECT_EQ(1, page0->GetPinCount());
 
+  // test ReadPageGuard::operator=(ReadPageGuard &&that)
+  {
+    auto reader_guard_1 = bpm->FetchPageRead(page_id_temp);
+    auto reader_guard_2 = bpm->FetchPageRead(page_id_temp);
+    EXPECT_EQ(3, page0->GetPinCount());
+    reader_guard_1 = std::move(reader_guard_2);
+    EXPECT_EQ(2, page0->GetPinCount());
+  }
+  EXPECT_EQ(1, page0->GetPinCount());
+  // ...
   auto guarded_page = BasicPageGuard(bpm.get(), page0);
 
   EXPECT_EQ(page0->GetData(), guarded_page.GetData());
