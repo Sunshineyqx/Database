@@ -57,9 +57,7 @@ $ ./test/trie_store_noncopy_test
 #### 检测格式:
 
 ```
-make format
-make check-lint
-make check-clang-tidy-p0
+make format && make check-lint && make check-clang-tidy-p0
 ```
 
 
@@ -89,6 +87,14 @@ $ cmake -DCMAKE_BUILD_TYPE=Debug -DBUSTUB_SANITIZER= ..
 ```
 BUSTUB_ASSERT: debug模式
 BUSTUB_ENSURE: debug && release模式
+```
+
+#### 日志
+
+```
+包含 src/include/common/logger. h
+LOG_INFO("# Pages: %d", num_pages);
+LOG_DEBUG("Fetching page %d", page_id);
 ```
 
 

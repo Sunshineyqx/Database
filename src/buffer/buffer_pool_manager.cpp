@@ -89,6 +89,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
         return nullptr;
       }
     }
+    // 获得可用页框号
     auto &page = pages_[cur_frame_id];
     if (page.IsDirty()) {
       disk_manager_->WritePage(page.GetPageId(), page.GetData());
@@ -101,14 +102,13 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
     replacer_->RecordAccess(cur_frame_id);
     replacer_->SetEvictable(cur_frame_id, false);
     page_table_[page_id] = cur_frame_id;
-    DeallocatePage(page.GetPageId());
     return pages_ + cur_frame_id;
   }
   // 页面在缓冲池中
   cur_frame_id = page_table_[page_id];
   pages_[cur_frame_id].pin_count_++;
   replacer_->RecordAccess(cur_frame_id);
-  // std::cout << pages_[cur_frame_id].GetPageId() << '\n';
+  replacer_->SetEvictable(cur_frame_id, false);
   return pages_ + cur_frame_id;
 }
 
