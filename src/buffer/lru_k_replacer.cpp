@@ -12,10 +12,9 @@
 
 #include "buffer/lru_k_replacer.h"
 #include <cstddef>
-#include <mutex>
 #include "common/config.h"
 #include "common/exception.h"
-// #include "common/logger.h" 
+// #include "common/logger.h"
 #include "common/macros.h"
 #include "type/limits.h"
 
@@ -104,7 +103,7 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
   BUSTUB_ASSERT(frame_id >= 0 && frame_id <= (int)replacer_size_, "Invalid frame id");
   std::lock_guard<std::mutex> lock(latch_);
 
-  if (node_store_.find(frame_id) == node_store_.end()){
+  if (node_store_.find(frame_id) == node_store_.end()) {
     return;
   }
   auto &node = node_store_[frame_id];

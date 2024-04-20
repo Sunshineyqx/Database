@@ -74,4 +74,52 @@ TEST(PageGuardTest, SampleTest) {
   disk_manager->ShutDown();
 }
 
+// 自定义测试
+TEST(PageGuardTest, MoveTest) {
+  const std::string db_name = "test.db";
+  const size_t buffer_pool_size = 10;
+  const size_t k = 2;
+
+  auto disk_manager = std::make_shared<DiskManagerUnlimitedMemory>();
+  auto bpm = std::make_shared<BufferPoolManager>(buffer_pool_size, disk_manager.get(), k);
+
+  Page *init_page[6];
+  page_id_t page_id_temp;
+  for (auto &i : init_page) {
+    i = bpm->NewPage(&page_id_temp);
+  }
+
+  BasicPageGuard basic_guard0(bpm.get(), init_page[0]);
+  BasicPageGuard basic_guard1(bpm.get(), init_page[1]);
+  basic_guard0 = std::move(basic_guard1);
+  BasicPageGuard basic_guard2(std::move(basic_guard0));
+
+  // BasicPageGuard basic_guard3(bpm.get(), init_page[2]);
+  // BasicPageGuard basic_guard4(bpm.get(), init_page[3]);
+  ReadPageGuard read_guard0(bpm.get(), init_page[2]);
+  ReadPageGuard read_guard1(bpm.get(), init_page[3]);
+  read_guard0 = std::move(read_guard1);
+  ReadPageGuard read_guard2(std::move(read_guard0));
+
+  // init_page[4]->WLatch();
+  // init_page[5]->WLatch();
+  WritePageGuard write_guard0(bpm.get(), init_page[4]);
+  WritePageGuard write_guard1(bpm.get(), init_page[5]);
+
+  // Important: here, latch the page id 4 by Page*, outside the watch of WPageGuard, but the WPageGuard still needs to
+  // unlatch page 4 in operator= where the page id 4 is on the left side of the operator =.
+  // Error log:
+  // terminate called after throwing an instance of 'std::system_error'
+  //   what():  Resource deadlock avoided
+  // 1/1 Test #64: PageGuardTest.MoveTest
+  init_page[4]->WLatch();
+  write_guard0 = std::move(write_guard1);
+  init_page[4]->WLatch();  // A deadlock will appear here if the latch is still on after operator= is called.
+
+  WritePageGuard write_guard2(std::move(write_guard0));
+
+  // Shutdown the disk manager and remove the temporary file we created.
+  disk_manager->ShutDown();
+}
+
 }  // namespace bustub

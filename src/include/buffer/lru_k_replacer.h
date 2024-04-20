@@ -33,24 +33,21 @@ class LRUKNode {
   auto SycModifyHistory(size_t time) -> void {
     if (history_.size() < k_) {
       history_.push_back(time);
-    } else if(history_.size() == k_) {
+    } else if (history_.size() == k_) {
       history_.pop_front();
       history_.push_back(time);
-    }
-    else{
+    } else {
       throw Exception("SycModifyHistory(): 历史队列记录多于k_...");
     }
   }
 
   auto GetKDistance() -> size_t {
     size_t ret;
-    if(history_.size() == k_){
+    if (history_.size() == k_) {
       ret = *(history_.begin());
-    }
-    else if (history_.size() < k_) {
+    } else if (history_.size() < k_) {
       throw Exception("GetKDistance(): 不应该对在node_less_k中的帧使用该函数...");
-    }
-    else{
+    } else {
       throw Exception("GetKDistance(): 历史队列记录多于k_...");
     }
     return ret;

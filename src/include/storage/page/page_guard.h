@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/exception.h"
 #include "storage/page/page.h"
 
 namespace bustub {
@@ -59,9 +60,19 @@ class BasicPageGuard {
    */
   ~BasicPageGuard();
 
-  auto PageId() -> page_id_t { return page_->GetPageId(); }
+  auto PageId() -> page_id_t {
+    if (page_ == nullptr) {
+      throw Exception("PageId(): page is null...");
+    }
+    return page_->GetPageId();
+  }
 
-  auto GetData() -> const char * { return page_->GetData(); }
+  auto GetData() -> const char * {
+    if (page_ == nullptr) {
+      throw Exception("PageId(): page is null...");
+    }
+    return page_->GetData();
+  }
 
   template <class T>
   auto As() -> const T * {
@@ -90,11 +101,7 @@ class BasicPageGuard {
 class ReadPageGuard {
  public:
   ReadPageGuard() = default;
-  ReadPageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {
-    if (page != nullptr) {
-      page->RLatch();
-    }
-  }
+  ReadPageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {}
   ReadPageGuard(const ReadPageGuard &) = delete;
   auto operator=(const ReadPageGuard &) -> ReadPageGuard & = delete;
 
@@ -154,11 +161,7 @@ class ReadPageGuard {
 class WritePageGuard {
  public:
   WritePageGuard() = default;
-  WritePageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {
-    if (page != nullptr) {
-      this->guard_.page_->WLatch();
-    }
-  }
+  WritePageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {}
   WritePageGuard(const WritePageGuard &) = delete;
   auto operator=(const WritePageGuard &) -> WritePageGuard & = delete;
 

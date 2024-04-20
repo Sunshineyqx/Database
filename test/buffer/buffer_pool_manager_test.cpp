@@ -144,4 +144,32 @@ TEST(BufferPoolManagerTest, SampleTest) {
   delete disk_manager;
 }
 
+TEST(BufferPoolManagerTest, MyTest) {
+  const std::string db_name = "test.db";
+  const size_t buffer_pool_size = 10;
+  const size_t k = 5;
+
+  auto *disk_manager = new DiskManager(db_name);
+  auto *bpm = new BufferPoolManager(buffer_pool_size, disk_manager, k);
+
+  page_id_t page_id_temp;
+  auto *page0 = bpm->NewPage(&page_id_temp);
+
+  auto guarded_page = BasicPageGuard(bpm, page0);
+
+  EXPECT_EQ(page0->GetData(), guarded_page.GetData());
+  EXPECT_EQ(page0->GetPageId(), guarded_page.PageId());
+  EXPECT_EQ(1, page0->GetPinCount());
+
+  guarded_page.Drop();
+
+  EXPECT_EQ(0, page0->GetPinCount());
+
+  // Shutdown the disk manager and remove the temporary file we created.
+  disk_manager->ShutDown();
+  remove("test.db");
+
+  delete bpm;
+  delete disk_manager;
+}
 }  // namespace bustub

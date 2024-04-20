@@ -18,7 +18,8 @@
 #include "common/macros.h"
 #include "storage/page/page.h"
 #include "storage/page/page_guard.h"
-
+// make buffer_pool_manager_test -j8
+// ./test/buffer_pool_manager_test
 namespace bustub {
 // make buffer_pool_manager_test -j8
 // ./test/buffer_pool_manager_test
@@ -57,9 +58,9 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
     }
     page_table_.erase(page.page_id_);  // forget...
     page.ResetMemory();
-    page.page_id_ = INVALID_PAGE_ID;
     page.pin_count_ = 0;
     DeallocatePage(page.GetPageId());
+    page.page_id_ = INVALID_PAGE_ID;
   }
 
   // 成功得到某个空页框，设置其元信息
@@ -75,9 +76,9 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   return pages_ + my_frame_id;
 }
 
-auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType access_type) -> Page * {
+auto BufferPoolManager::FetchPage(page_id_t page_id, AccessType access_type) -> Page * {
   std::lock_guard<std::mutex> lock(latch_);
-  // nullptr: 页面不在缓冲池需要从disk读取，但是所有的页框都在使用、没有可以淘汰的页框(all pined)
+  // nullptr: 页面不在缓冲池需要从disk读取，但是所有的页框都在使用且没有可以淘汰的页框(all pined)
   frame_id_t cur_frame_id = -1;
   if (page_table_.count(page_id) == 0U) {
     if (!free_list_.empty()) {
@@ -88,14 +89,20 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
       if (!flag) {
         return nullptr;
       }
+      // 逐出了某个页， 重置数据
+      auto &page = pages_[cur_frame_id];
+      if (page.IsDirty()) {
+        disk_manager_->WritePage(page.GetPageId(), page.GetData());
+        page.is_dirty_ = false;
+      }
+      page_table_.erase(page.page_id_);
+      page.ResetMemory();
+      page.pin_count_ = 0;
+      DeallocatePage(page.GetPageId());
+      page.page_id_ = INVALID_PAGE_ID;
     }
-    // 获得可用页框号
+    // 获得可用空页框
     auto &page = pages_[cur_frame_id];
-    if (page.IsDirty()) {
-      disk_manager_->WritePage(page.GetPageId(), page.GetData());
-      page.is_dirty_ = false;
-    }
-    page_table_.erase(page.page_id_);
     page.page_id_ = page_id;
     page.pin_count_ = 1;
     disk_manager_->ReadPage(page_id, page.data_);
@@ -112,7 +119,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
   return pages_ + cur_frame_id;
 }
 
-auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unused]] AccessType access_type) -> bool {
+auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, AccessType access_type) -> bool {
   std::lock_guard<decltype(latch_)> lock(latch_);
   // false: page不在缓冲池/引用计数已经为0
   if (page_table_.count(page_id) == 0U || pages_[page_table_[page_id]].GetPinCount() <= 0) {
@@ -184,9 +191,17 @@ auto BufferPoolManager::AllocatePage() -> page_id_t { return next_page_id_++; }
 
 auto BufferPoolManager::FetchPageBasic(page_id_t page_id) -> BasicPageGuard { return {this, this->FetchPage(page_id)}; }
 
-auto BufferPoolManager::FetchPageRead(page_id_t page_id) -> ReadPageGuard { return {this, this->FetchPage(page_id)}; }
+auto BufferPoolManager::FetchPageRead(page_id_t page_id) -> ReadPageGuard {
+  auto page = FetchPage(page_id);
+  page->RLatch();
+  return {this, page};
+}
 
-auto BufferPoolManager::FetchPageWrite(page_id_t page_id) -> WritePageGuard { return {this, this->FetchPage(page_id)}; }
+auto BufferPoolManager::FetchPageWrite(page_id_t page_id) -> WritePageGuard {
+  auto page = FetchPage(page_id);
+  page->WLatch();
+  return {this, page};
+}
 
 auto BufferPoolManager::NewPageGuarded(page_id_t *page_id) -> BasicPageGuard { return {this, this->NewPage(page_id)}; }
 
