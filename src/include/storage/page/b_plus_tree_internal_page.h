@@ -13,7 +13,9 @@
 #include <queue>
 #include <string>
 
+#include "common/config.h"
 #include "storage/page/b_plus_tree_page.h"
+#include "storage/page/page.h"
 
 namespace bustub {
 
@@ -26,7 +28,11 @@ namespace bustub {
  * K(i) <= K < K(i+1).
  * NOTE: since the number of keys does not equal to number of child pointers,
  * the first key always remains invalid. That is to say, any search/lookup
- * should ignore the first key.
+ * should ignore the first key.so lookups should always start with the second key.
+ *
+ * At any time, each internal page should be at least half full. 
+ * During deletion, two half-full pages can be merged, or keys and pointers can be redistributed to avoid merging. 
+ * During insertion, one full page can be split into two, or keys and pointers can be redistributed to avoid splitting.
  *
  * Internal page format (keys are stored in increasing order):
  *  --------------------------------------------------------------------------
@@ -47,6 +53,13 @@ class BPlusTreeInternalPage : public BPlusTreePage {
    */
   void Init(int max_size = INTERNAL_PAGE_SIZE);
 
+  /*
+  * 补充: 
+  */
+  auto SplitTo(B_PLUS_TREE_INTERNAL_PAGE_TYPE* new_page) -> void; // 分裂内部节点
+  auto LookUpV(const KeyType& key, KeyComparator &cmp) const  -> ValueType; // 在节点内根据key寻找第一个key<=K的节点的val
+  auto InsertAsRoot(page_id_t old_page_id, const KeyType& key, page_id_t new_page_id) -> void; // 作为空的root，插入前两个kv
+  auto InsertKVAfter(const KeyType &key, page_id_t new_page_id, KeyComparator &cmp) -> void; // 将kv插入到合适的位置
   /**
    * @param index The index of the key to get. Index must be non-zero.
    * @return Key at index
@@ -60,6 +73,10 @@ class BPlusTreeInternalPage : public BPlusTreePage {
    */
   void SetKeyAt(int index, const KeyType &key);
 
+  /*
+  * 
+  */
+  void SetValAt(int index, ValueType val);
   /**
    *
    * @param value the value to search for

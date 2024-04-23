@@ -77,6 +77,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
 }
 
 auto BufferPoolManager::FetchPage(page_id_t page_id, AccessType access_type) -> Page * {
+  BUSTUB_ASSERT(page_id != INVALID_PAGE_ID, "BufferPoolManager::FetchPage: Invalid page_id");
   std::lock_guard<std::mutex> lock(latch_);
   // nullptr: 页面不在缓冲池需要从disk读取，但是所有的页框都在使用且没有可以淘汰的页框(all pined)
   frame_id_t cur_frame_id = -1;
