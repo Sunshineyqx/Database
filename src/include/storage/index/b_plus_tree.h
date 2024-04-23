@@ -97,6 +97,7 @@ class BPlusTree {
   auto Split(InternalPage* old_page) -> page_id_t; // 针对内部节点，将old_page的kv划分给新的page，需要小心第一个kv
   auto Split(LeafPage* old_page) -> page_id_t; // 针对叶子节点，将old_page的kv划分给新的page，需要修改next_page_id
   auto InsertIntoParent(Context& ctx, WritePageGuard&& old_page,const KeyType& key, WritePageGuard&& new_page) -> void; // 递归地向父节点插入k，修改v
+  auto FindLeafPage(const KeyType& key, bool leftMost) -> B_PLUS_TREE_LEAF_PAGE_TYPE*; // 仅仅为了符合2022 test的接口。。。
 
   // Return the value associated with a given key
   auto GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *txn = nullptr) -> bool;

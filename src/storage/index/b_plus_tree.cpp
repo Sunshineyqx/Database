@@ -66,6 +66,7 @@ auto BPLUSTREE_TYPE::UpdateRootPageId(Context &ctx, page_id_t new_root_id) -> vo
  * my helper function: 从根节点开始，根据key找到对应的叶子节点。
  *
  */
+ 
 // my
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag) -> page_id_t {
@@ -118,6 +119,20 @@ auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag) 
   }
   throw Exception("BPLUSTREE_TYPE::FindLeafPage(): 传入了错误的OpFlag");
 }
+// 仅仅为了符合2022 test的接口。。。
+INDEX_TEMPLATE_ARGUMENTS
+auto BPLUSTREE_TYPE::FindLeafPage(const KeyType& key, bool leftMost) -> B_PLUS_TREE_LEAF_PAGE_TYPE* {
+  int flag = (leftMost) ? OpType::OpLeftMost : OpType::OpFind;
+  Context ctx;
+  ctx.root_page_id_ = this->GetRootPageId();
+  ctx.header_page_ = bpm_->FetchPageWrite(header_page_id_);
+  auto leaf_page_id = FindLeafPage(ctx, key, flag);
+  auto* leaf_page_ptr = bpm_->FetchPage(leaf_page_id);
+  return reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE*>(leaf_page_ptr->GetData());
+}
+
+
+
 /*
  * Return the only value that associated with input key
  * This method is used for point query
