@@ -31,7 +31,11 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(int max_size) {
   SetPageType(IndexPageType::INTERNAL_PAGE);
   SetSize(0);
-  SetMaxSize(max_size);
+  if(max_size == INTERNAL_PAGE_SIZE){
+    SetMaxSize(max_size);
+  } else {
+    SetMaxSize(max_size + 1);
+  }
 }
 
 /*
@@ -71,7 +75,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::SplitTo(B_PLUS_TREE_INTERNAL_PAGE_TYPE* new
     new_page->SetValAt(start, ValueAt(i));
     start++;
   }
-  int gap = n - (n / 2);
+  int gap = n - (n/2);
   new_page->SetSize(gap);
   this->SetSize(n - gap);
 }

@@ -47,10 +47,10 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::SplitTo(B_PLUS_TREE_LEAF_PAGE_TYPE* new_page, p
   int n = GetSize();
   int start = 0;
   for(int i = n/2; i < n; i++){
-    new_page->array_[start++].first = this->array_[i].first;
-    new_page->array_[start++].second = this->array_[i].second;
+    new_page->SetKeyAt(start, this->KeyAt(i));
+    new_page->SetValAt(start, this->ValAt(i));
+    start++;
   }
-
   int gap = n - (n / 2);
   new_page->SetSize(gap);
   this->SetSize(n - gap);
@@ -128,6 +128,7 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::InsertKV(const KeyType &key, const ValueType &v
   if(cmp(key, k) > 0){
     SetKeyAt(index + 1, key);
     SetValAt(index + 1, value);
+    // std::cout << KeyAt(index + 1) << " " << ValAt(index + 1);
     this->IncreaseSize(1);
     return true;
   }

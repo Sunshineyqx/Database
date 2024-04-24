@@ -60,6 +60,14 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   auto LookUpV(const KeyType& key, KeyComparator &cmp) const  -> ValueType; // 在节点内根据key寻找第一个key<=K的节点的val
   auto InsertAsRoot(page_id_t old_page_id, const KeyType& key, page_id_t new_page_id) -> void; // 作为空的root，插入前两个kv
   auto InsertKVAfter(const KeyType &key, page_id_t new_page_id, KeyComparator &cmp) -> void; // 将kv插入到合适的位置
+  
+  // debug
+  auto PrintKeys() const  -> void{
+    for(int i = 0; i < GetSize(); i++){
+      std::cout << array_[i].first << " ";
+    }
+    std::cout << "\n";
+  }
   /**
    * @param index The index of the key to get. Index must be non-zero.
    * @return Key at index

@@ -178,7 +178,7 @@ auto BPLUSTREE_TYPE::CreateNewTree(Context &ctx, const KeyType &key, const Value
   WritePageGuard new_writeguard = bpm_->FetchPageWrite(new_page_id);
   auto new_root = new_writeguard.AsMut<LeafPage>();
   // 新页面初始化
-  new_root->Init();
+  new_root->Init(leaf_max_size_);
   // 更新ctx以及b+tree的root_page_id
   UpdateRootPageId(ctx, new_page_id);
   // 向root插入kv
@@ -189,11 +189,12 @@ auto BPLUSTREE_TYPE::CreateNewTree(Context &ctx, const KeyType &key, const Value
 // 其只有在将key递归传给上层时有用，其余时候都是无效
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::Split(InternalPage *old_page) -> page_id_t {
+  BUSTUB_ASSERT(old_page->GetSize() >= 2, "BPLUSTREE_TYPE::Split(): kv太少...");
   page_id_t new_page_id;
   bpm_->NewPageGuarded(&new_page_id);
   auto new_writeguard = bpm_->FetchPageWrite(new_page_id);
   auto new_page = new_writeguard.AsMut<InternalPage>();
-  new_page->Init();
+  new_page->Init(internal_max_size_);
   old_page->SplitTo(new_page);  // wait!
   return new_page_id;
 }
@@ -205,7 +206,7 @@ auto BPLUSTREE_TYPE::Split(LeafPage *old_page) -> page_id_t {
   bpm_->NewPageGuarded(&new_page_id);
   auto new_writeguard = bpm_->FetchPageWrite(new_page_id);
   auto new_page = new_writeguard.AsMut<LeafPage>();
-  new_page->Init();
+  new_page->Init(leaf_max_size_);
   old_page->SplitTo(new_page, new_page_id);
   return new_page_id;
 }
@@ -214,8 +215,8 @@ auto BPLUSTREE_TYPE::Split(LeafPage *old_page) -> page_id_t {
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::InsertIntoParent(Context &ctx, WritePageGuard &&old_guard, const KeyType &key,
                                       WritePageGuard &&new_guard) -> void {
-  auto old_page = old_guard.AsMut<BPlusTreePage>();
-  auto new_page = new_guard.AsMut<BPlusTreePage>();
+  // auto old_page = old_guard.AsMut<BPlusTreePage>();
+  // auto new_page = new_guard.AsMut<BPlusTreePage>();
   // 根节点分裂了, 需要创建并设置新的root
   if (old_guard.PageId() == ctx.root_page_id_) {
     page_id_t new_root_id;
@@ -223,12 +224,9 @@ auto BPLUSTREE_TYPE::InsertIntoParent(Context &ctx, WritePageGuard &&old_guard, 
     WritePageGuard new_root_writeguard = bpm_->FetchPageWrite(new_root_id);
     auto new_root_page = new_root_writeguard.AsMut<InternalPage>();
     // 新页面要初始化
-    new_root_page->Init();
+    new_root_page->Init(internal_max_size_);
     // 更新父页面root_page
     new_root_page->InsertAsRoot(old_guard.PageId(), key, new_guard.PageId());
-    // 更新子页面的类型
-    old_page->SetPageType(IndexPageType::LEAF_PAGE);
-    new_page->SetPageType(IndexPageType::LEAF_PAGE);
     // 更新b+树的根节点id
     UpdateRootPageId(ctx, new_root_id);
     return;
@@ -237,23 +235,26 @@ auto BPLUSTREE_TYPE::InsertIntoParent(Context &ctx, WritePageGuard &&old_guard, 
   WritePageGuard parent_pageguard = std::move(ctx.write_set_.back());
   ctx.write_set_.pop_back();
   auto parent_page = parent_pageguard.AsMut<InternalPage>();
-  // 先插入再分裂
+  // 内部节点 先插入在分裂
   parent_page->InsertKVAfter(key, new_guard.PageId(), comparator_);  // here
   if (parent_page->GetSize() == parent_page->GetMaxSize()) {
-    page_id_t new_parent_page_id = Split(parent_page);
-    WritePageGuard new_parent_pageguard = bpm_->FetchPageWrite(new_parent_page_id);
-    auto new_parent_page = new_parent_pageguard.AsMut<InternalPage>();
-    // 内部节点的第一个k只有在这时有效~
-    InsertIntoParent(ctx, std::move(parent_pageguard), new_parent_page->KeyAt(0), std::move(new_parent_pageguard));
+      page_id_t new_parent_page_id = Split(parent_page);
+      WritePageGuard new_parent_pageguard = bpm_->FetchPageWrite(new_parent_page_id);
+      auto new_parent_page = new_parent_pageguard.AsMut<InternalPage>();
+      // 内部节点的第一个k只有在这时有效~
+      InsertIntoParent(ctx, std::move(parent_pageguard), new_parent_page->KeyAt(0), std::move(new_parent_pageguard));
   }
 }
 
 // 树不为空， 寻找叶子节点并插入kv，递归地插入父节点
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::InsertIntoLeaf(Context &ctx, const KeyType &key, const ValueType &val) -> bool {
-  // 先找到leaf page，判断该key是否已经存在(false)
+  // 先找到leaf page
+  // 没有对应的leaf
   page_id_t leaf_page_id = FindLeafPage(ctx, key, OpType::OpInsert);
-  BUSTUB_ASSERT(leaf_page_id != INVALID_PAGE_ID, "InsertIntoLeaf(): key已经存在...");
+  if(leaf_page_id == INVALID_PAGE_ID){
+    return false;
+  }
 
   WritePageGuard leaf_write = std::move(ctx.write_set_.back());
   ctx.write_set_.pop_back();
@@ -261,7 +262,11 @@ auto BPLUSTREE_TYPE::InsertIntoLeaf(Context &ctx, const KeyType &key, const Valu
   // 不存在
   // 先插入，再分裂
   BUSTUB_ASSERT(leaf_page->GetSize() < leaf_page->GetMaxSize(), "InsertIntoLeaf(): 叶子节点已满，无法插入");
-  leaf_page->InsertKV(key, val, comparator_);
+  // 插入同时判断key是否已经存在
+  bool success = leaf_page->InsertKV(key, val, comparator_);
+  if(!success){
+    return false;
+  }
   auto cur_size = leaf_page->GetSize();
   auto max_size = leaf_page->GetMaxSize();
   if (cur_size == max_size) {
@@ -291,7 +296,6 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
     return true;
   }
   // 不空
-
   // insert
   return InsertIntoLeaf(ctx, key, value);
 }
@@ -424,7 +428,7 @@ void BPLUSTREE_TYPE::PrintTree(page_id_t page_id, const BPlusTreePage *page) {
     // Print the contents of the leaf page.
     std::cout << "Contents: ";
     for (int i = 0; i < leaf->GetSize(); i++) {
-      std::cout << leaf->KeyAt(i);
+      std::cout << leaf->KeyAt(i) << ", " << leaf->ValAt(i); // my add
       if ((i + 1) < leaf->GetSize()) {
         std::cout << ", ";
       }
