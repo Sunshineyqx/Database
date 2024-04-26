@@ -36,7 +36,7 @@ TEST(BPlusTreeTests, InsertTest1) {
   ASSERT_EQ(page_id, HEADER_PAGE_ID);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(),bpm, comparator, 2, 3);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator, 2, 3);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -156,8 +156,6 @@ TEST(BPlusTreeTests, IteratorTest) {
   // create transaction
   auto *transaction = new Transaction(0);
 
-
-
   std::vector<int64_t> keys = {5, 4, 3, 2, 1};
   for (auto key : keys) {
     int64_t value = key & 0xFFFFFFFF;
@@ -243,7 +241,7 @@ TEST(BPlusTreeTests, SplitTest) {
   auto *transaction = new Transaction(0);
 
   std::vector<int64_t> keys = {1, 2, 3, 4, 5};
-  //int step = 0;
+  // int step = 0;
   for (auto key : keys) {
     int64_t value = key & 0xFFFFFFFF;
     rid.Set(static_cast<int32_t>(key >> 32), value);
@@ -255,7 +253,7 @@ TEST(BPlusTreeTests, SplitTest) {
     tree.Print(bpm);
     std::cout <<"----------------" << "\n";
     */
-    // tree.Draw(bpm, "SplitTest_step" + std::to_string(step++) + "_insert" + std::to_string(key) + ".dot");     
+    // tree.Draw(bpm, "SplitTest_step" + std::to_string(step++) + "_insert" + std::to_string(key) + ".dot");
   }
   // tree.Draw(bpm, "SplitTest_step.dot");
   // insert into repetitive key, all failed
@@ -366,7 +364,6 @@ TEST(BPlusTreeTests, InsertTest3) {
   // create transaction
   auto *transaction = new Transaction(0);
 
-
   std::vector<int64_t> keys = {5, 4, 3, 2, 1};
   for (auto key : keys) {
     int64_t value = key & 0xFFFFFFFF;
@@ -419,7 +416,6 @@ TEST(BPlusTreeTests, ScaleTest) {
   // create transaction
   auto *transaction = new Transaction(0);
 
-
   int64_t scale = 10000;
   std::vector<int64_t> keys;
   for (int64_t key = 1; key < scale; key++) {
@@ -468,7 +464,7 @@ TEST(BPlusTreeTests, Scaled_InsertTest1) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator, 3, 3);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator, 3, 3);
   GenericKey<8> index_key{};
   RID rid;
   // create transaction
@@ -549,12 +545,11 @@ TEST(BPlusTreeConcurrentTestC1, SplitTest) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator, 2, 3);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator, 2, 3);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
   auto *transaction = new Transaction(0);
-
 
   std::vector<int64_t> keys = {1, 2, 3, 4, 5};
   for (auto key : keys) {
@@ -666,7 +661,7 @@ TEST(BPlusTreeConcurrentTestC1, InsertTest2) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -718,12 +713,11 @@ TEST(BPlusTreeConcurrentTestC1, ScaleTestC1) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
   auto *transaction = new Transaction(0);
-
 
   int64_t scale = 100;
   std::vector<int64_t> keys;
@@ -797,12 +791,11 @@ TEST(GradeScopeBPlusTreeTests, InsertTest1) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
   auto *transaction = new Transaction(0);
-
 
   std::vector<int64_t> keys = {1, 2, 3, 4, 5};
   for (auto key : keys) {
@@ -859,12 +852,11 @@ TEST(GradeScopeBPlusTreeTests, InsertTest2) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator, 2, 3);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator, 2, 3);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
   auto *transaction = new Transaction(0);
-
 
   std::vector<int64_t> keys = {5, 4, 3, 2, 1};
   for (auto key : keys) {
@@ -933,7 +925,7 @@ TEST(GradeScopeBPlusTreeTests, DeleteTest1) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator, 3, 3);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator, 3, 3);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -947,10 +939,10 @@ TEST(GradeScopeBPlusTreeTests, DeleteTest1) {
     rid.Set(static_cast<int32_t>(key >> 32), value);
     index_key.SetFromInteger(key);
     tree.Insert(index_key, rid, transaction);  // 传入了transaction
-    // tree.Draw(bpm, "DeleteTest_step" + std::to_string(step++) + "_insert" + ".dot");     
+    // tree.Draw(bpm, "DeleteTest_step" + std::to_string(step++) + "_insert" + ".dot");
   }
   // mydebug
-  // tree.Draw(bpm, "DeleteTest_step" + std::to_string(step++) + "_insertOk" + ".dot");     
+  // tree.Draw(bpm, "DeleteTest_step" + std::to_string(step++) + "_insertOk" + ".dot");
 
   std::vector<RID> rids;
   for (auto key : keys) {
@@ -985,7 +977,7 @@ TEST(GradeScopeBPlusTreeTests, DeleteTest1) {
   for (auto key : remove_keys) {
     index_key.SetFromInteger(key);
     tree.Remove(index_key, transaction);
-    // tree.Draw(bpm, "DeleteTest_step" + std::to_string(step++) + "_Remove" + ".dot");     
+    // tree.Draw(bpm, "DeleteTest_step" + std::to_string(step++) + "_Remove" + ".dot");
   }
 
   start_key = 2;
@@ -1034,7 +1026,7 @@ TEST(GradeScopeBPlusTreeTests, DeleteTest2) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -1130,7 +1122,7 @@ TEST(GradeScopeBPlusTreeTests, ScaleTest) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -1184,7 +1176,7 @@ TEST(GradeScopeBPlusTreeTests, ScaleTest) {
   }
   // mydebug
   // int step = 1;
-  // tree.Draw(bpm, "ScaleTest_step" + std::string("InsertOk") + ".dot");     
+  // tree.Draw(bpm, "ScaleTest_step" + std::string("InsertOk") + ".dot");
   // shuffle remove_keys
   std::shuffle(remove_keys.begin(), remove_keys.end(), rng);
   for (auto key : remove_keys) {
@@ -1247,12 +1239,11 @@ TEST(GradeScopeBPlusTreeTests, SequentialMixTest) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",header_page->GetPageId(), bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
   auto *transaction = new Transaction(0);
-
 
   // first, populate index
   std::vector<int64_t> for_insert;
@@ -1310,4 +1301,3 @@ TEST(GradeScopeBPlusTreeTests, SequentialMixTest) {
   remove("test.log");
 }
 }  // namespace bustub
-

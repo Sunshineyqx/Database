@@ -190,13 +190,13 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Merge(B_PLUS_TREE_INTERNAL_PAGE_TYPE *right
 
 // 偏移array_ offset个单位
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::ShiftData(int offset) -> void{
-  if(offset == 0){
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::ShiftData(int offset) -> void {
+  if (offset == 0) {
     return;
   }
-  if(offset > 0){ // right
+  if (offset > 0) {  // right
     std::copy_backward(array_, array_ + GetSize(), array_ + GetSize() + offset);
-  } else { // left
+  } else {  // left
     std::copy(array_ - offset, array_ + GetSize(), array_);
   }
   IncreaseSize(offset);

@@ -18,7 +18,7 @@ namespace bustub {
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE::IndexIterator(BufferPoolManager *bpm, page_id_t cur_page_id, int cur_index)
     : bpm_(bpm), cur_page_id_(cur_page_id), cur_index_(cur_index) {
-  if(cur_page_id == INVALID_PAGE_ID){
+  if (cur_page_id == INVALID_PAGE_ID) {
     return;
   }
   ReadPageGuard page_readguard = bpm_->FetchPageRead(cur_page_id_);

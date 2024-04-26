@@ -30,8 +30,8 @@ namespace bustub {
  * the first key always remains invalid. That is to say, any search/lookup
  * should ignore the first key.so lookups should always start with the second key.
  *
- * At any time, each internal page should be at least half full. 
- * During deletion, two half-full pages can be merged, or keys and pointers can be redistributed to avoid merging. 
+ * At any time, each internal page should be at least half full.
+ * During deletion, two half-full pages can be merged, or keys and pointers can be redistributed to avoid merging.
  * During insertion, one full page can be split into two, or keys and pointers can be redistributed to avoid splitting.
  *
  * Internal page format (keys are stored in increasing order):
@@ -54,20 +54,23 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   void Init(int max_size = INTERNAL_PAGE_SIZE);
 
   /*
-  * 补充: 
-  */
-  auto SplitTo(B_PLUS_TREE_INTERNAL_PAGE_TYPE* new_page) -> void; // 分裂内部节点
-  auto LookUpEqualIndex(const KeyType &key, KeyComparator &cmp) const -> int ; // 在节点内根据key寻找key==K的节点的Index
-  auto LookUpEqualLessIndex(const KeyType& key, KeyComparator &cmp) const -> int; // 在节点内根据key寻找第一个key<=K的节点的index
-  auto LookUpV(const KeyType& key, KeyComparator &cmp) const  -> ValueType; // 在节点内根据key寻找第一个key<=K的节点的val
-  auto InsertAsRoot(page_id_t old_page_id, const KeyType& key, page_id_t new_page_id) -> void; // 作为空的root，插入前两个kv
-  auto InsertKVAfter(const KeyType &key, page_id_t new_page_id, KeyComparator &cmp) -> void; // 将kv插入到合适的位置
-  auto DeleteKV(const KeyType& key, KeyComparator& cmp) -> bool;
-  auto Merge(B_PLUS_TREE_INTERNAL_PAGE_TYPE* right_leaf) -> void;
+   * 补充:
+   */
+  auto SplitTo(B_PLUS_TREE_INTERNAL_PAGE_TYPE *new_page) -> void;              // 分裂内部节点
+  auto LookUpEqualIndex(const KeyType &key, KeyComparator &cmp) const -> int;  // 在节点内根据key寻找key==K的节点的Index
+  auto LookUpEqualLessIndex(const KeyType &key, KeyComparator &cmp) const
+      -> int;  // 在节点内根据key寻找第一个key<=K的节点的index
+  auto LookUpV(const KeyType &key, KeyComparator &cmp) const
+      -> ValueType;  // 在节点内根据key寻找第一个key<=K的节点的val
+  auto InsertAsRoot(page_id_t old_page_id, const KeyType &key, page_id_t new_page_id)
+      -> void;  // 作为空的root，插入前两个kv
+  auto InsertKVAfter(const KeyType &key, page_id_t new_page_id, KeyComparator &cmp) -> void;  // 将kv插入到合适的位置
+  auto DeleteKV(const KeyType &key, KeyComparator &cmp) -> bool;
+  auto Merge(B_PLUS_TREE_INTERNAL_PAGE_TYPE *right_leaf) -> void;
   auto ShiftData(int offset) -> void;
   // debug
-  auto PrintKeys() const  -> void{
-    for(int i = 0; i < GetSize(); i++){
+  auto PrintKeys() const -> void {
+    for (int i = 0; i < GetSize(); i++) {
       std::cout << array_[i].first << " ";
     }
     std::cout << "\n";
@@ -86,8 +89,8 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   void SetKeyAt(int index, const KeyType &key);
 
   /*
-  * 
-  */
+   *
+   */
   void SetValAt(int index, ValueType val);
   /**
    *

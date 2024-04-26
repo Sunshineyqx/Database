@@ -26,7 +26,7 @@ INDEX_TEMPLATE_ARGUMENTS
 class IndexIterator {
  public:
   // you may define your own constructor based on your member variables
-  IndexIterator(BufferPoolManager* bpm, page_id_t cur_page_id, int cur_index);
+  IndexIterator(BufferPoolManager *bpm, page_id_t cur_page_id, int cur_index);
   ~IndexIterator();  // NOLINT
   // 返回迭代器是否指向最后一个键/值对
   auto IsEnd() -> bool;
@@ -39,13 +39,11 @@ class IndexIterator {
     return this->bpm_ == itr.bpm_ && this->cur_page_id_ == itr.cur_index_ && this->cur_page_id_ == itr.cur_page_id_;
   }
   // 返回两个迭代器是否不相等
-  auto operator!=(const IndexIterator &itr) const -> bool {
-    return !(*this == itr);
-  }
+  auto operator!=(const IndexIterator &itr) const -> bool { return !(*this == itr); }
 
  private:
   // add your own private member variables here
-  BufferPoolManager* bpm_;
+  BufferPoolManager *bpm_;
   page_id_t cur_page_id_;
   int cur_index_;
   MappingType entry_;

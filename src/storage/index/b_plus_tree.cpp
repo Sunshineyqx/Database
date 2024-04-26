@@ -25,7 +25,6 @@
 // make b_plus_tree_sequential_scale_test -j8
 // ./test/b_plus_tree_sequential_scale_test
 
-
 // make b_plus_tree_concurrent_test -j8
 // ./test/b_plus_tree_concurrent_test
 namespace bustub {
@@ -89,13 +88,13 @@ auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag,
   // OpFind
   if (opFlag == OpFind) {
     page_id_t page_id = ctx.root_page_id_;
-    BasicPageGuard pageguard = bpm_->FetchPageBasic(page_id);
+    ReadPageGuard pageguard = bpm_->FetchPageRead(page_id);
     auto page = pageguard.As<BPlusTreePage>();
     while (!page->IsLeafPage()) {
       auto internal_page = reinterpret_cast<const InternalPage *>(page);
       auto next_page_id = internal_page->LookUpV(key, comparator_);
       page_id = next_page_id;
-      pageguard = bpm_->FetchPageBasic(next_page_id);
+      pageguard = bpm_->FetchPageRead(next_page_id);
       page = pageguard.As<BPlusTreePage>();
     }
     return page_id;
@@ -139,16 +138,16 @@ auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag,
     while (!page->IsLeafPage()) {
       auto internal_page = reinterpret_cast<const InternalPage *>(page);
       auto index = internal_page->LookUpEqualLessIndex(key, comparator_);
-      if(index == -1){
+      if (index == -1) {
         return INVALID_PAGE_ID;
       }
       auto next_page_id = internal_page->ValueAt(index);
-      
+
       page_id = next_page_id;
       pageguard = bpm_->FetchPageWrite(next_page_id);
       page = pageguard.As<BPlusTreePage>();
       ctx.write_set_.push_back(std::move(pageguard));
-      (*page_id_to_index)[page_id] = index; // For remove
+      (*page_id_to_index)[page_id] = index;  // For remove
     }
     return page_id;
   }
@@ -190,7 +189,7 @@ auto BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   auto leaf = leaf_page.As<LeafPage>();
   // 2. 从叶子节点内部查找对应的kv
   auto exist = leaf->LookUpIfExist(key, comparator_);
-  if(!exist){
+  if (!exist) {
     return false;
   }
   auto ret = leaf->LookUpV(key, comparator_);
@@ -383,7 +382,7 @@ auto BPLUSTREE_TYPE::RemoveLeafEntry(Context &ctx, const KeyType &key,
 
   // 叶子节点是根节点并且现在是空的: 更新root_page_id为无效
   if (cur_leaf_id == ctx.root_page_id_ && cur_leaf_page->GetSize() == 0) {
-    if(!ctx.header_page_.has_value()){
+    if (!ctx.header_page_.has_value()) {
       throw Exception("ctx.head_page_ is nullopt");
     }
     WritePageGuard &header_writeguard = ctx.header_page_.value();
@@ -489,7 +488,7 @@ auto BPLUSTREE_TYPE::RemoveInternalEntry(Context &ctx, const KeyType &key,
 
   // 内部节点节点是根节点并且现在只有一个无效kv: 更新root_page_id为无效
   if (cur_internal_id == ctx.root_page_id_ && cur_internal_page->GetSize() == 1) {
-    if(!ctx.header_page_.has_value()){
+    if (!ctx.header_page_.has_value()) {
       throw Exception("ctx.head_page_ is nullopt");
     }
     WritePageGuard &header_writeguard = ctx.header_page_.value();
@@ -546,7 +545,7 @@ auto BPLUSTREE_TYPE::RemoveInternalEntry(Context &ctx, const KeyType &key,
   // 合并right_page ===> left_page
   int left_size = left_page->GetSize();
   int right_size = right_page->GetSize();
-  if (left_size + right_size < left_page->GetMaxSize()) {  // wait: 
+  if (left_size + right_size < left_page->GetMaxSize()) {  // wait:
     right_page->SetKeyAt(0, up_key);
     left_page->Merge(right_page);  // wait
     // 需要从bpm_中删除右页面么? wait
