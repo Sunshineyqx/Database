@@ -87,16 +87,14 @@ TEST(BPlusTreeTests, InsertTest2) {
   auto *transaction = new Transaction(0);
 
   std::vector<int64_t> keys = {1, 2, 3, 4, 5};
+  // int step = 1;
   for (auto key : keys) {
     int64_t value = key & 0xFFFFFFFF;
     rid.Set(static_cast<int32_t>(key >> 32), value);
     index_key.SetFromInteger(key);
     tree.Insert(index_key, rid, transaction);
-    /*debug
-    std::cout <<"----------------" << "\n";
-    std::cout << tree.DrawBPlusTree();
-    tree.Print(bpm);
-    */
+    // mydebug
+    // tree.Draw(bpm, "SplitTest_step" + std::to_string(step++) + "_insert" + std::to_string(key) + ".dot");
   }
 
   std::vector<RID> rids;

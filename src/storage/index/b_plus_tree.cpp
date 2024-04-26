@@ -90,6 +90,10 @@ auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag,
     page_id_t page_id = ctx.root_page_id_;
     ReadPageGuard pageguard = bpm_->FetchPageRead(page_id);
     auto page = pageguard.As<BPlusTreePage>();
+    if(ctx.header_page_.has_value()){
+      ctx.header_page_.value().Drop();
+      ctx.header_page_ = std::nullopt;
+    }
     while (!page->IsLeafPage()) {
       auto internal_page = reinterpret_cast<const InternalPage *>(page);
       auto next_page_id = internal_page->LookUpV(key, comparator_);
@@ -111,6 +115,13 @@ auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag,
       page_id = next_page_id;
       pageguard = bpm_->FetchPageWrite(next_page_id);
       page = pageguard.As<BPlusTreePage>();
+      if (page->IsSafe(opFlag)) {
+        if (ctx.header_page_.has_value()) {
+          ctx.header_page_.value().Drop();
+          ctx.header_page_ = std::nullopt;
+        }
+        ctx.write_set_.clear();
+      }
       ctx.write_set_.push_back(std::move(pageguard));
     }
     return page_id;
@@ -118,13 +129,17 @@ auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag,
   // OpLeftMost
   if (opFlag == OpLeftMost) {
     page_id_t page_id = ctx.root_page_id_;
-    BasicPageGuard pageguard = bpm_->FetchPageBasic(page_id);
+    ReadPageGuard pageguard = bpm_->FetchPageRead(page_id);
     auto page = pageguard.As<BPlusTreePage>();
+    if(ctx.header_page_.has_value()){
+      ctx.header_page_.value().Drop();
+      ctx.header_page_ = std::nullopt;
+    }
     while (!page->IsLeafPage()) {
       auto internal_page = reinterpret_cast<const InternalPage *>(page);
       auto next_page_id = internal_page->ValueAt(0);  // here
       page_id = next_page_id;
-      pageguard = bpm_->FetchPageBasic(next_page_id);
+      pageguard = bpm_->FetchPageRead(next_page_id);
       page = pageguard.As<BPlusTreePage>();
     }
     return page_id;
@@ -142,10 +157,16 @@ auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag,
         return INVALID_PAGE_ID;
       }
       auto next_page_id = internal_page->ValueAt(index);
-
       page_id = next_page_id;
       pageguard = bpm_->FetchPageWrite(next_page_id);
       page = pageguard.As<BPlusTreePage>();
+      if (page->IsSafe(opFlag)) {
+        if (ctx.header_page_.has_value()) {
+          ctx.header_page_.value().Drop();
+          ctx.header_page_ = std::nullopt;
+        }
+        ctx.write_set_.clear();
+      }
       ctx.write_set_.push_back(std::move(pageguard));
       (*page_id_to_index)[page_id] = index;  // For remove
     }
@@ -153,6 +174,7 @@ auto BPLUSTREE_TYPE::FindLeafPage(Context &ctx, const KeyType &key, int opFlag,
   }
   throw Exception("BPLUSTREE_TYPE::FindLeafPage(): 传入了错误的OpFlag");
 }
+
 // 仅仅为了符合2022 test的接口。。。
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, bool leftMost) -> B_PLUS_TREE_LEAF_PAGE_TYPE * {
@@ -254,7 +276,7 @@ auto BPLUSTREE_TYPE::InsertIntoParent(Context &ctx, WritePageGuard &&old_guard, 
   // auto old_page = old_guard.AsMut<BPlusTreePage>();
   // auto new_page = new_guard.AsMut<BPlusTreePage>();
   // 根节点分裂了, 需要创建并设置新的root
-  if (old_guard.PageId() == ctx.root_page_id_) {
+  if (ctx.IsRootPage(old_guard.PageId())) {
     page_id_t new_root_id;
     bpm_->NewPageGuarded(&new_root_id);
     WritePageGuard new_root_writeguard = bpm_->FetchPageWrite(new_root_id);
@@ -271,15 +293,18 @@ auto BPLUSTREE_TYPE::InsertIntoParent(Context &ctx, WritePageGuard &&old_guard, 
   WritePageGuard parent_pageguard = std::move(ctx.write_set_.back());
   ctx.write_set_.pop_back();
   auto parent_page = parent_pageguard.AsMut<InternalPage>();
-  // 内部节点 先插入在分裂
-  parent_page->InsertKVAfter(key, new_guard.PageId(), comparator_);  // here
-  if (parent_page->GetSize() == parent_page->GetMaxSize()) {
-    page_id_t new_parent_page_id = Split(parent_page);
-    WritePageGuard new_parent_pageguard = bpm_->FetchPageWrite(new_parent_page_id);
-    auto new_parent_page = new_parent_pageguard.AsMut<InternalPage>();
-    // 内部节点的第一个key只有在这时有效~
-    InsertIntoParent(ctx, std::move(parent_pageguard), new_parent_page->KeyAt(0), std::move(new_parent_pageguard));
+  // 父节点插入是否安全
+  if(parent_page->IsSafe(OpInsert)){
+    parent_page->InsertKVAfter(key, new_guard.PageId(), comparator_); 
+    return;
   }
+  // 不安全: 先插入在分裂
+  parent_page->InsertKVAfter(key, new_guard.PageId(), comparator_);  // here
+  page_id_t new_parent_page_id = Split(parent_page);
+  WritePageGuard new_parent_pageguard = bpm_->FetchPageWrite(new_parent_page_id);
+  auto new_parent_page = new_parent_pageguard.AsMut<InternalPage>();
+  // 内部节点的第一个key只有在这时有效~
+  InsertIntoParent(ctx, std::move(parent_pageguard), new_parent_page->KeyAt(0), std::move(new_parent_pageguard));
 }
 
 // 树不为空， 寻找叶子节点并插入kv，递归地插入父节点
@@ -295,22 +320,23 @@ auto BPLUSTREE_TYPE::InsertIntoLeaf(Context &ctx, const KeyType &key, const Valu
   WritePageGuard leaf_write = std::move(ctx.write_set_.back());
   ctx.write_set_.pop_back();
   auto *leaf_page = leaf_write.AsMut<LeafPage>();
-  // 不存在
-  // 先插入，再分裂
+  // 叶子节点很安全
+  if(leaf_page->IsSafe(OpInsert)){
+    bool success = leaf_page->InsertKV(key, val, comparator_);
+    return success;
+  }
+  // 不安全: 先插入,再分裂...
   BUSTUB_ASSERT(leaf_page->GetSize() < leaf_page->GetMaxSize(), "InsertIntoLeaf(): 叶子节点已满，无法插入");
   // 插入同时判断key是否已经存在
   bool success = leaf_page->InsertKV(key, val, comparator_);
   if (!success) {
     return false;
   }
-  auto cur_size = leaf_page->GetSize();
-  auto max_size = leaf_page->GetMaxSize();
-  if (cur_size == max_size) {
-    page_id_t new_page_id = Split(leaf_page);
-    WritePageGuard new_write = bpm_->FetchPageWrite(new_page_id);
-    auto new_page = new_write.AsMut<LeafPage>();
-    InsertIntoParent(ctx, std::move(leaf_write), new_page->KeyAt(0), std::move(new_write));
-  }
+  // 分裂
+  page_id_t new_page_id = Split(leaf_page);
+  WritePageGuard new_write = bpm_->FetchPageWrite(new_page_id);
+  auto new_page = new_write.AsMut<LeafPage>();
+  InsertIntoParent(ctx, std::move(leaf_write), new_page->KeyAt(0), std::move(new_write));
   return true;
 }
 
@@ -424,7 +450,6 @@ auto BPLUSTREE_TYPE::RemoveLeafEntry(Context &ctx, const KeyType &key,
   } else {  // 叶子节点不是父节点最后指向的节点，默认找右兄弟
     sibling_page_id = parent_page->ValueAt(key_index_in_parent + 1);
   }
-  WritePageGuard sibling_writeguard = bpm_->FetchPageWrite(sibling_page_id);
 
   // 一致化处理逻辑
   LeafPage *left_page = nullptr;
@@ -432,11 +457,15 @@ auto BPLUSTREE_TYPE::RemoveLeafEntry(Context &ctx, const KeyType &key,
   KeyType up_key;
   bool redistribute_to_right = true;
   if (is_last_kv) {
+    cur_leaf_writeguard.Drop(); // 先Drop, 确保我们先获取左边节点的锁，在获取右边。(和叶子节点遍历的顺序一致，避免死锁)
+    WritePageGuard sibling_writeguard = bpm_->FetchPageWrite(sibling_page_id);
     left_page = sibling_writeguard.AsMut<LeafPage>();
-    right_page = cur_leaf_page;
+    cur_leaf_writeguard = bpm_->FetchPageWrite(cur_leaf_id);
+    right_page = cur_leaf_writeguard.AsMut<LeafPage>();
     up_key = parent_page->KeyAt(key_index_in_parent);
   } else {
     left_page = cur_leaf_page;
+    WritePageGuard sibling_writeguard = bpm_->FetchPageWrite(sibling_page_id);
     right_page = sibling_writeguard.AsMut<LeafPage>();
     up_key = parent_page->KeyAt(key_index_in_parent + 1);
     redistribute_to_right = false;

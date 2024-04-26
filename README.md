@@ -54,7 +54,7 @@ $ ./test/trie_store_noncopy_test
 
 
 
-#### 检测格式:
+#### 检测格式
 
 ```
 make format && make check-lint && make check-clang-tidy-p2
@@ -278,7 +278,7 @@ tree.Draw(bpm, "SplitTest_step.dot");
 以下命令都可以尝试:)
 
 ```
-dot -Tpng -O *.dot
+    dot -Tpng -O *.dot
 ```
 
 

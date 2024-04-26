@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "storage/page/b_plus_tree_page.h"
+#include "common/exception.h"
 
 namespace bustub {
 
@@ -46,6 +47,17 @@ auto BPlusTreePage::GetMinSize() const -> int {
   }
   */
   return max_size_ / 2;
+}
+
+// 补充: 判断页面执行某只操作是否安全
+auto BPlusTreePage::IsSafe(int opFlag) const -> bool {
+  if (opFlag == OpInsert) {
+    return this->GetSize() < this->GetMaxSize() - 1;
+  }
+  if (opFlag == OpDelete) {
+    return this->GetSize() > this->GetMinSize();
+  }
+  throw Exception("对错误的操作判断是否安全");
 }
 
 }  // namespace bustub
