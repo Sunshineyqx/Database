@@ -18,6 +18,16 @@
 #include "type/value.h"
 // make b_plus_tree_insert_test -j8
 // ./test/b_plus_tree_insert_test
+
+// make b_plus_tree_delete_test -j8
+// ./test/b_plus_tree_delete_test
+
+// make b_plus_tree_sequential_scale_test -j8
+// ./test/b_plus_tree_sequential_scale_test
+
+
+// make b_plus_tree_concurrent_test -j8
+// ./test/b_plus_tree_concurrent_test
 namespace bustub {
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -179,6 +189,10 @@ auto BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   auto leaf_page = bpm_->FetchPageRead(leaf_page_id);
   auto leaf = leaf_page.As<LeafPage>();
   // 2. 从叶子节点内部查找对应的kv
+  auto exist = leaf->LookUpIfExist(key, comparator_);
+  if(!exist){
+    return false;
+  }
   auto ret = leaf->LookUpV(key, comparator_);
   // 3. 填充结果
   result->push_back(ret);
