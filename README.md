@@ -242,7 +242,7 @@ make -j`nproc` bpm-bench
 
 
 
-### 6.  实验感触..
+### 6.  实验感触...
 
 1. 对于内部节点，第一个kv是无效的，在insert拆分时需要注意，如果新的节点只有一个kv该怎么办，只有这个kv的节点没有意义。其实这种情况只在internal_max_size很小时会发生，比如当其为3时，内部节点拆分为作业两个节点，比如左节点包含0、1，右节点包含2，此时这个右节点就没有意义，不能让上层继续处理。
 
@@ -253,5 +253,61 @@ make -j`nproc` bpm-bench
    1. 从内部节点的Init函数入手，让其max_size等于参数里的size+1(最大时不变)，此时计算size时，第一个kv计算在内。(这样的话，通过绘制相关的函数绘制B+树时，显示出来的key的数目是符合逻辑的)。
    2. 直接在计算size时忽视第一个kv。个人觉得这样处理可能也会影响其他函数。所以用的第一种。
 
-2. 
 
+
+
+
+### 7. Debug Tips
+
+- TAs已经为我们准备好了b_plus_tree_printer工具，并且已经准备的Draw/ToString方法，善用它们将B+树可视化，更好的观察插入、删除行为是否正确。 示例：
+
+```cpp
+int step = 0;     
+for (auto key : keys) {       
+  int64_t value = key & 0xFFFFFFFF;       
+  rid.Set(static_cast<int32_t>(key >> 32), value);       
+  index_key.SetFromInteger(key);       
+  tree.Insert(index_key, rid, transaction);       
+  tree.Draw(bpm, "SplitTest_step" + std::to_string(step++) + "_insert" + std::to_string(key) + ".dot");     
+}     
+tree.Draw(bpm, "SplitTest_step.dot");
+```
+
+使用 dot 工具在相应文件夹下 `dot -Tpng -O *.dot` ，然后愉快的debug，查看千奇百怪的B+树形状吧
+
+以下命令都可以尝试:)
+
+```
+dot -Tpng -O *.dot
+```
+
+
+
+- debug模式下开启了 sanitizer 是不会产生coredump文件的
+
+如果要查看coredump，请在顶层cmake CXX_FLAGS_DEBUG中把 fsanitize 注释掉
+
+```text
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -fsanitize=${BUSTUB_SANITIZER} -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+```
+
+替换为
+
+```
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb)
+```
+
+接着 `ulimit -c unlimited`,程序崩溃时就会产生coredump文件。
+
+然后 `gdb -c [exefilename] [corename]`，知道下面几个命令就差不多够了，多线程很有用。
+
+```text
+l 查看代码
+info threads 查看线程信息
+thread [num] 切换线程
+bt 查看栈帧
+frame [num] 切换栈帧
+info locals 查看变量信息   
+p xx 打印变量
+layout split 同时显示源代码和汇编代码窗口。
+```

@@ -143,6 +143,50 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::InsertKV(const KeyType &key, const ValueType &v
   return true;
 }
 
+// 删除指定kv
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::DeleteKV(const KeyType& key, KeyComparator& cmp) -> bool{
+  int index = LookUpIndex(key, cmp);
+  if(index == -1){
+    return false;
+  }
+  for(int i = index + 1; i < GetSize(); i++){
+    SetKeyAt(i - 1, KeyAt(i));
+    SetValAt(i - 1, ValAt(i));
+  }
+  IncreaseSize(-1);
+  return true;
+}
+
+// 合并右侧节点
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::Merge(B_PLUS_TREE_LEAF_PAGE_TYPE* right_leaf) -> void{
+  BUSTUB_ASSERT(this->GetSize() + right_leaf->GetSize() < this->GetMaxSize(), "B_PLUS_TREE_LEAF_PAGE_TYPE::Merge: 超载..");
+  int begin = 0;
+  int end = right_leaf->GetSize();
+  int num = end - begin;
+  int i = this->GetSize();
+  for(;begin < end; begin++, i++){
+    this->SetKeyAt(i, right_leaf->KeyAt(begin));
+    this->SetValAt(i, right_leaf->ValAt(begin));
+  }
+  this->IncreaseSize(num);
+}
+
+// 偏移array_ offset个单位
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::ShiftData(int offset) -> void{
+  if(offset == 0){
+    return;
+  }
+  if(offset > 0){ // right
+    std::copy_backward(array_, array_ + GetSize(), array_ + GetSize() + offset);
+  } else { // left
+    std::copy(array_ - offset, array_ + GetSize(), array_);
+  }
+  IncreaseSize(offset);
+}
+
 /**
  * Helper methods to set/get next page id
  */

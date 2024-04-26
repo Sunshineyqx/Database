@@ -19,9 +19,7 @@ namespace bustub {
  */
 auto BPlusTreePage::IsLeafPage() const -> bool { return page_type_ == IndexPageType::LEAF_PAGE; }
 auto BPlusTreePage::IsInternalPage() const -> bool { return page_type_ == IndexPageType::INTERNAL_PAGE; }
-void BPlusTreePage::SetPageType(IndexPageType page_type) {
-    page_type_ = page_type;
-}
+void BPlusTreePage::SetPageType(IndexPageType page_type) { page_type_ = page_type; }
 /*
  * Helper methods to get/set size (number of key/value pairs stored in that
  * page)
@@ -38,10 +36,16 @@ void BPlusTreePage::SetMaxSize(int size) { max_size_ = size; }
 
 /*
  * Helper method to get min page size
- * Generally, min page size == max page size / 2; // 逻辑中需要特判根页面！！！
+ * Generally, min page size == max page size / 2; // 需要区分
  */
-auto BPlusTreePage::GetMinSize() const -> int { 
-    return (max_size_ + 1) / 2; 
+// 大小小于minsize时需要合并或者借kv(均从兄弟节点)
+auto BPlusTreePage::GetMinSize() const -> int {
+  /*
+  if (page_type_ == IndexPageType::INTERNAL_PAGE) {
+    return (max_size_ + 1) / 2; // wait
+  }
+  */
+  return max_size_ / 2;
 }
 
 }  // namespace bustub

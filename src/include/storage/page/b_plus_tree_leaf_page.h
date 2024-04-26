@@ -72,7 +72,9 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   auto LookUpIfExist(const KeyType& key, KeyComparator &cmp) const -> bool; // 在节点内根据key寻找是否存在该key
   auto LookUpV(const KeyType& key, KeyComparator &cmp) const  -> ValueType; // 在节点内根据key寻找key==K的节点的val
   auto InsertKV(const KeyType& key, const ValueType& value, KeyComparator &cmp) -> bool; // 插入kv, 必须保证不会满
-
+  auto DeleteKV(const KeyType& key, KeyComparator& cmp) -> bool;
+  auto Merge(B_PLUS_TREE_LEAF_PAGE_TYPE* right_leaf) -> void;
+  auto ShiftData(int offset) -> void;
   // helper methods
   auto GetNextPageId() const -> page_id_t;
   void SetNextPageId(page_id_t next_page_id);
