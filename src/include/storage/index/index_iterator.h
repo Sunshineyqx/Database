@@ -13,10 +13,7 @@
  * For range scan of b+ tree
  */
 #pragma once
-#include "buffer/buffer_pool_manager.h"
-#include "common/config.h"
 #include "storage/page/b_plus_tree_leaf_page.h"
-#include "storage/page/b_plus_tree_page.h"
 
 namespace bustub {
 
@@ -26,27 +23,30 @@ INDEX_TEMPLATE_ARGUMENTS
 class IndexIterator {
  public:
   // you may define your own constructor based on your member variables
-  IndexIterator(BufferPoolManager *bpm, page_id_t cur_page_id, int cur_index);
+  using LeafPage = BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>;
+  IndexIterator();
   ~IndexIterator();  // NOLINT
-  // 返回迭代器是否指向最后一个键/值对
+
+  IndexIterator(BufferPoolManager *buffer_pool_manager, page_id_t page_id, int index, MappingType &entry);
+  IndexIterator(BufferPoolManager *buffer_pool_manager, page_id_t page_id, int index);
+
   auto IsEnd() -> bool;
-  // 返回迭代器当前指向的键/值对
+
   auto operator*() -> const MappingType &;
-  // 返回迭代器是否指向最后一个键/值对
+
   auto operator++() -> IndexIterator &;
-  // 返回两个迭代器是否相等
-  auto operator==(const IndexIterator &itr) const -> bool {
-    return this->bpm_ == itr.bpm_ && this->cur_page_id_ == itr.cur_index_ && this->cur_page_id_ == itr.cur_page_id_;
-  }
-  // 返回两个迭代器是否不相等
-  auto operator!=(const IndexIterator &itr) const -> bool { return !(*this == itr); }
+
+  auto operator==(const IndexIterator &itr) const -> bool;
+
+  auto operator!=(const IndexIterator &itr) const -> bool;
 
  private:
   // add your own private member variables here
   BufferPoolManager *bpm_;
   page_id_t cur_page_id_;
-  int cur_index_;
+  int index_;
   MappingType entry_;
+  // KeyComparator comparator_;
 };
 
 }  // namespace bustub

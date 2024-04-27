@@ -10,7 +10,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "storage/page/b_plus_tree_page.h"
-#include "common/exception.h"
 
 namespace bustub {
 
@@ -19,8 +18,8 @@ namespace bustub {
  * Page type enum class is defined in b_plus_tree_page.h
  */
 auto BPlusTreePage::IsLeafPage() const -> bool { return page_type_ == IndexPageType::LEAF_PAGE; }
-auto BPlusTreePage::IsInternalPage() const -> bool { return page_type_ == IndexPageType::INTERNAL_PAGE; }
 void BPlusTreePage::SetPageType(IndexPageType page_type) { page_type_ = page_type; }
+
 /*
  * Helper methods to get/set size (number of key/value pairs stored in that
  * page)
@@ -37,27 +36,21 @@ void BPlusTreePage::SetMaxSize(int size) { max_size_ = size; }
 
 /*
  * Helper method to get min page size
- * Generally, min page size == max page size / 2; // 需要区分
+ * Generally, min page size == max page size / 2
  */
-// 大小小于minsize时需要合并或者借kv(均从兄弟节点)
 auto BPlusTreePage::GetMinSize() const -> int {
-  /*
   if (page_type_ == IndexPageType::INTERNAL_PAGE) {
-    return (max_size_ + 1) / 2; // wait
+    return (max_size_ + 1) / 2;
   }
-  */
   return max_size_ / 2;
 }
 
-// 补充: 判断页面执行某只操作是否安全
-auto BPlusTreePage::IsSafe(int opFlag) const -> bool {
-  if (opFlag == OpInsert) {
-    return this->GetSize() < this->GetMaxSize() - 1;
+// insert: true; delete: false;
+auto BPlusTreePage::IsSafe(OperationType op_type) const -> bool {
+  if (op_type == OperationType::INSERT) {
+    return page_type_ == IndexPageType::LEAF_PAGE ? GetSize() < GetMaxSize() - 1 : GetSize() < GetMaxSize();
   }
-  if (opFlag == OpDelete) {
-    return this->GetSize() > this->GetMinSize();
-  }
-  throw Exception("对错误的操作判断是否安全");
+  return GetSize() > GetMinSize();
 }
 
 }  // namespace bustub

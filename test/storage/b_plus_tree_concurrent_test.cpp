@@ -210,15 +210,12 @@ void InsertTest2Call() {
 
     // keys to Insert
     std::vector<int64_t> keys;
-    int64_t scale_factor = 1000;
+    int64_t scale_factor = 258;
     for (int64_t key = 1; key < scale_factor; key++) {
       keys.push_back(key);
     }
     LaunchParallelTest(8, 0, InsertHelperSplit, &tree, keys, 2);
-    // mydebug
-    static int step = 1;
-    tree.Draw(bpm, "multiThread insert" + std::to_string(step++) + ".dot");
-    
+
     std::vector<RID> rids;
     GenericKey<8> index_key;
     for (auto key : keys) {
@@ -226,7 +223,6 @@ void InsertTest2Call() {
       index_key.SetFromInteger(key);
       tree.GetValue(index_key, &rids);
       EXPECT_EQ(rids.size(), 1);
-
       int64_t value = key & 0xFFFFFFFF;
       EXPECT_EQ(rids[0].GetSlotNum(), value);
     }

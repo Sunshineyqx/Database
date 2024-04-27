@@ -13,9 +13,7 @@
 #include <queue>
 #include <string>
 
-#include "common/config.h"
 #include "storage/page/b_plus_tree_page.h"
-#include "storage/page/page.h"
 
 namespace bustub {
 
@@ -28,11 +26,7 @@ namespace bustub {
  * K(i) <= K < K(i+1).
  * NOTE: since the number of keys does not equal to number of child pointers,
  * the first key always remains invalid. That is to say, any search/lookup
- * should ignore the first key.so lookups should always start with the second key.
- *
- * At any time, each internal page should be at least half full.
- * During deletion, two half-full pages can be merged, or keys and pointers can be redistributed to avoid merging.
- * During insertion, one full page can be split into two, or keys and pointers can be redistributed to avoid splitting.
+ * should ignore the first key.
  *
  * Internal page format (keys are stored in increasing order):
  *  --------------------------------------------------------------------------
@@ -51,30 +45,8 @@ class BPlusTreeInternalPage : public BPlusTreePage {
    * the creation of a new page to make a valid BPlusTreeInternalPage
    * @param max_size Maximal size of the page
    */
-  void Init(int max_size = INTERNAL_PAGE_SIZE);
+  void Init(page_id_t parent_page_id, int max_size = INTERNAL_PAGE_SIZE);
 
-  /*
-   * 补充:
-   */
-  auto SplitTo(B_PLUS_TREE_INTERNAL_PAGE_TYPE *new_page) -> void;              // 分裂内部节点
-  auto LookUpEqualIndex(const KeyType &key, KeyComparator &cmp) const -> int;  // 在节点内根据key寻找key==K的节点的Index
-  auto LookUpEqualLessIndex(const KeyType &key, KeyComparator &cmp) const
-      -> int;  // 在节点内根据key寻找第一个key<=K的节点的index
-  auto LookUpV(const KeyType &key, KeyComparator &cmp) const
-      -> ValueType;  // 在节点内根据key寻找第一个key<=K的节点的val
-  auto InsertAsRoot(page_id_t old_page_id, const KeyType &key, page_id_t new_page_id)
-      -> void;  // 作为空的root，插入前两个kv
-  auto InsertKVAfter(const KeyType &key, page_id_t new_page_id, KeyComparator &cmp) -> void;  // 将kv插入到合适的位置
-  auto DeleteKV(const KeyType &key, KeyComparator &cmp) -> bool;
-  auto Merge(B_PLUS_TREE_INTERNAL_PAGE_TYPE *right_leaf) -> void;
-  auto ShiftData(int offset) -> void;
-  // debug
-  auto PrintKeys() const -> void {
-    for (int i = 0; i < GetSize(); i++) {
-      std::cout << array_[i].first << " ";
-    }
-    std::cout << "\n";
-  }
   /**
    * @param index The index of the key to get. Index must be non-zero.
    * @return Key at index
@@ -88,10 +60,6 @@ class BPlusTreeInternalPage : public BPlusTreePage {
    */
   void SetKeyAt(int index, const KeyType &key);
 
-  /*
-   *
-   */
-  void SetValAt(int index, ValueType val);
   /**
    *
    * @param value the value to search for
@@ -105,6 +73,18 @@ class BPlusTreeInternalPage : public BPlusTreePage {
    */
   auto ValueAt(int index) const -> ValueType;
 
+  auto FindValue(KeyType key, const KeyComparator &comparator, int *child_page_index = nullptr) const -> ValueType;
+  auto Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) -> bool;
+  auto Delete(const KeyType &key, const KeyComparator &comparator) -> bool;
+  void SetKeyValueAt(int index, const KeyType &key, const ValueType &value);
+  void SetValueAt(int index, const ValueType &value);
+  void CopyHalfFrom(MappingType *array, int min_size, int size);
+  auto GetData() -> MappingType *;
+  auto GetParentPageId() -> page_id_t;
+  void SetParentPageId(page_id_t parent_page_id);
+  void Merge(MappingType *array, int size);
+  void ShiftData(int dist);
+
   /**
    * @brief For test only, return a string representing all keys in
    * this internal page, formatted as "(key1,key2,key3,...)"
@@ -112,19 +92,20 @@ class BPlusTreeInternalPage : public BPlusTreePage {
    * @return std::string
    */
   auto ToString() const -> std::string {
-    std::string kstr = "(";
+    std::string kstr = "Size of page " + std::to_string(GetSize()) + "(";
     bool first = true;
 
     // first key of internal page is always invalid
-    for (int i = 1; i < GetSize(); i++) {
+    for (int i = 0; i < GetSize(); i++) {
       KeyType key = KeyAt(i);
+      ValueType val = ValueAt(i);
       if (first) {
         first = false;
       } else {
         kstr.append(",");
       }
 
-      kstr.append(std::to_string(key.ToString()));
+      kstr.append("{" + std::to_string(key.ToString()) + ", " + std::to_string(val) + "}");
     }
     kstr.append(")");
 
@@ -133,6 +114,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
  private:
   // Flexible array member for page data.
+  page_id_t parent_page_id_;
   MappingType array_[0];
 };
 }  // namespace bustub

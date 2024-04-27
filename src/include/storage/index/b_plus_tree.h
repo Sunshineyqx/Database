@@ -1,3 +1,4 @@
+
 /**
  * b_plus_tree.h
  *
@@ -19,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include "common/config.h"
 #include "common/macros.h"
 #include "concurrency/transaction.h"
@@ -40,17 +42,6 @@ struct PrintableBPlusTree;
  */
 class Context {
  public:
-  auto Clear() -> void {
-    if (this->header_page_.has_value()) {
-      this->header_page_.value().Drop();
-    }
-    this->header_page_ = std::nullopt;
-    this->root_page_id_ = INVALID_PAGE_ID;
-    this->read_set_.clear();
-    this->write_set_.clear();
-  }
-  // 必要的析构函数
-  ~Context() { this->Clear(); }
   // When you insert into / remove from the B+ tree, store the write guard of header page here.
   // Remember to drop the header page guard and set it to nullopt when you want to unlock all.
   std::optional<WritePageGuard> header_page_{std::nullopt};
@@ -74,7 +65,6 @@ INDEX_TEMPLATE_ARGUMENTS
 class BPlusTree {
   using InternalPage = BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator>;
   using LeafPage = BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>;
-  enum OpType { OpFind = 0, OpInsert, OpLeftMost, OpDelete };
 
  public:
   explicit BPlusTree(std::string name, page_id_t header_page_id, BufferPoolManager *buffer_pool_manager,
@@ -83,31 +73,12 @@ class BPlusTree {
 
   // Returns true if this B+ tree has no keys and values.
   auto IsEmpty() const -> bool;
-  auto IsEmpty(Context &ctx) const -> bool;
 
   // Insert a key-value pair into this B+ tree.
   auto Insert(const KeyType &key, const ValueType &value, Transaction *txn = nullptr) -> bool;
 
   // Remove a key and its value from this B+ tree.
   void Remove(const KeyType &key, Transaction *txn);
-
-  // 补充: 插入、单点查询...
-  auto UpdateRootPageId(Context &ctx, page_id_t root_id) -> void;
-  auto FindLeafPage(Context &ctx, const KeyType &key, int opFlag, std::unordered_map<page_id_t, int> *page_id_to_index)
-      -> page_id_t;  // 从根节点开始，根据key找到对应的叶子节点
-  auto CreateNewTree(Context &ctx, const KeyType &key, const ValueType &val)
-      -> void;  // 目前树为空，创建新的BPlusTree,并插入kv
-  auto InsertIntoLeaf(Context &ctx, const KeyType &key, const ValueType &val) -> bool;  // 树不为空， 向其中插入kv
-  auto Split(InternalPage *old_page) -> page_id_t;  // 针对内部节点，将old_page的kv划分给新的page，需要小心第一个kv
-  auto Split(LeafPage *old_page) -> page_id_t;  // 针对叶子节点，将old_page的kv划分给新的page，需要修改next_page_id
-  auto InsertIntoParent(Context &ctx, WritePageGuard &&old_guard, const KeyType &key, WritePageGuard &&new_guard)
-      -> void;  // 递归地向父节点插入k，修改v
-  auto FindLeafPage(const KeyType &key, bool leftMost)
-      -> B_PLUS_TREE_LEAF_PAGE_TYPE *;  // 仅仅为了符合2022 test的接口。。。
-  // 补充: 删除
-  auto RemoveLeafEntry(Context &ctx, const KeyType &key, std::unordered_map<page_id_t, int> &page_id_to_index) -> void;
-  auto RemoveInternalEntry(Context &ctx, const KeyType &key, std::unordered_map<page_id_t, int> &page_id_to_index)
-      -> void;
 
   // Return the value associated with a given key
   auto GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *txn = nullptr) -> bool;
@@ -161,6 +132,25 @@ class BPlusTree {
    */
   auto ToPrintableBPlusTree(page_id_t root_id) -> PrintableBPlusTree;
 
+  /* helper function */
+  void InsertInParent(const KeyType &key, WritePageGuard &&new_page_guard, Context &ctx);
+  void RemoveLeafEntry(Context &ctx, KeyType key, std::unordered_map<page_id_t, int> *page_id_to_index,
+                       Transaction *txn);
+  void RemoveInternalEntry(Context &ctx, KeyType key, page_id_t val,
+                           std::unordered_map<page_id_t, int> *page_id_to_index);
+  auto FindLeafPage(Context &ctx, const KeyType &key, OperationType op_type, bool optimistic, Transaction *txn,
+                    std::unordered_map<page_id_t, int> *page_id_to_index = nullptr) -> bool;
+  void UpdateParentPage(Context &ctx, const KeyType &key, InternalPage *new_root_page, WritePageGuard &&new_page_guard,
+                        page_id_t cur_page_id, page_id_t root_page_id);
+  void NewLeafRootPage(Context &ctx, page_id_t *root_page_id);
+  void PrintPage(WritePageGuard &guard, bool is_leaf_page);
+  void PrintPage(ReadPageGuard &guard, bool is_leaf_page);
+  auto NewLeafPage(Context &ctx, page_id_t *new_page_id, page_id_t parent_page_id) -> LeafPage *;
+  auto Split(LeafPage *leaf_page, LeafPage *new_page) -> KeyType;
+  auto SplitLeafPage(LeafPage *leaf_page, LeafPage *new_page, const KeyType &key, const ValueType &value,
+                     page_id_t new_page_id) -> bool;
+  auto GetTxnId(Transaction *txn) -> size_t;
+
   // member variable
   std::string index_name_;
   BufferPoolManager *bpm_;
@@ -173,7 +163,7 @@ class BPlusTree {
 
 /**
  * @brief for test only. PrintableBPlusTree is a printalbe B+ tree.
- * We first convert B+ tree into a printable B+ tree and then print it.
+ * We first convert B+ tree into a printable B+ tree and the print it.
  */
 struct PrintableBPlusTree {
   int size_;

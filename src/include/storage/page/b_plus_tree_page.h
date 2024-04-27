@@ -27,6 +27,9 @@ namespace bustub {
 // define page type enum
 enum class IndexPageType { INVALID_INDEX_PAGE = 0, LEAF_PAGE, INTERNAL_PAGE };
 
+// define operation type enum
+enum class OperationType { FIND = 0, INSERT, DELETE };
+
 /**
  * Both internal and leaf page are inherited from this page.
  *
@@ -40,14 +43,12 @@ enum class IndexPageType { INVALID_INDEX_PAGE = 0, LEAF_PAGE, INTERNAL_PAGE };
  */
 class BPlusTreePage {
  public:
-  enum OpType { OpFind = 0, OpInsert, OpLeftMost, OpDelete };
   // Delete all constructor / destructor to ensure memory safety
   BPlusTreePage() = delete;
   BPlusTreePage(const BPlusTreePage &other) = delete;
   ~BPlusTreePage() = delete;
 
   auto IsLeafPage() const -> bool;
-  auto IsInternalPage() const -> bool;
   void SetPageType(IndexPageType page_type);
 
   auto GetSize() const -> int;
@@ -57,14 +58,18 @@ class BPlusTreePage {
   auto GetMaxSize() const -> int;
   void SetMaxSize(int max_size);
   auto GetMinSize() const -> int;
-  // 补充
-  auto IsSafe(int opFlag) const -> bool;
+
+  auto IsSafe(OperationType op_type) const -> bool;
 
  private:
-  // member variable, attributes that both internal and leaf page share // __attribute__((__unused__))
-  IndexPageType page_type_;  // Page type (internal or leaf)
-  int size_;                 // Number of key & value pairs in page
-  int max_size_;             // Max number of key & value pairs in page
+  // member variable, attributes that both internal and leaf page share
+  // IndexPageType page_type_ __attribute__((__unused__));
+  // int size_ __attribute__((__unused__));
+  // int max_size_ __attribute__((__unused__));
+
+  IndexPageType page_type_;
+  int size_;
+  int max_size_;
 };
 
 }  // namespace bustub

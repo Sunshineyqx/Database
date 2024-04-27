@@ -278,7 +278,7 @@ tree.Draw(bpm, "SplitTest_step.dot");
 以下命令都可以尝试:)
 
 ```
-    dot -Tpng -O *.dot
+dot -Tpng -O *.dot
 ```
 
 
