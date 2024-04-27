@@ -39,7 +39,7 @@
 namespace bustub {
 // helper function to launch multiple threads
 template <typename... Args>
-void LaunchParallelTest(uint64_t num_threads, uint64_t txn_id_start, Args &&... args) {
+void LaunchParallelTest(uint64_t num_threads, uint64_t txn_id_start, Args &&...args) {
   std::vector<std::thread> thread_group;
 
   // Launch a group of threads
@@ -351,7 +351,7 @@ void MixTest1Call() {
     auto header_page = bpm->NewPage(&page_id);
     (void)header_page;
     // create b+ tree
-    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
 
     // first, populate index
     std::vector<int64_t> for_insert;
@@ -415,7 +415,7 @@ void MixTest2Call() {
     auto header_page = bpm->NewPage(&page_id);
     (void)header_page;
     // create b+ tree
-    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
 
     // Add perserved_keys
     std::vector<int64_t> perserved_keys;
@@ -483,7 +483,7 @@ void MixTest3Call() {
     auto header_page = bpm->NewPage(&page_id);
     (void)header_page;
     // create b+ tree
-    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
 
     // first, populate index
     std::vector<int64_t> for_insert;
@@ -545,7 +545,7 @@ void MixTest4Call() {
     auto header_page = bpm->NewPage(&page_id);
     (void)header_page;
     // create b+ tree
-    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
 
     // first, populate index
     std::vector<int64_t> for_insert;
@@ -725,7 +725,7 @@ TEST(BPlusTreeConcurrentTestC2Seq, DISABLED_InsertTest1) {
   (void)header_page;
 
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -787,12 +787,11 @@ TEST(BPlusTreeConcurrentTestC2Seq, DISABLED_InsertTest2) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
   auto *transaction = new Transaction(0);
-
 
   std::vector<int64_t> keys = {5, 4, 3, 2, 1};
   for (auto key : keys) {
@@ -862,7 +861,7 @@ TEST(BPlusTreeConcurrentTestC2Seq, DeleteTest1) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -1030,7 +1029,7 @@ TEST(BPlusTreeConcurrentTestC2Seq, DISABLED_ScaleTest) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -1122,7 +1121,7 @@ TEST(BPlusTreeConcurrentTestC2Seq, DISABLED_SequentialMixTest) {
   auto header_page = bpm->NewPage(&page_id);
   (void)header_page;
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk",page_id, bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
