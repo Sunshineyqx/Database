@@ -321,7 +321,8 @@ layout split 同时显示源代码和汇编代码窗口。
 ### 1. Bustub Shell
 
 ```
-cd build && make -j8 shell
+cd build 
+make -j8  shell
 ./bin/bustub-shell
 
  \dt: show all tables                                                             
@@ -333,6 +334,69 @@ cd build && make -j8 shell
 
 ```
 make -j8 sqllogictest
-./bin/bustub-sqllogictest ../test/sql/p3.00-primer.slt --verbose
+
+# Task 1
+./bin/bustub-sqllogictest ../test/sql/p3.01-seqscan.slt
+./bin/bustub-sqllogictest ../test/sql/p3.02-insert.slt
+./bin/bustub-sqllogictest ../test/sql/p3.03-update.slt
+./bin/bustub-sqllogictest ../test/sql/p3.04-delete.slt
+./bin/bustub-sqllogictest ../test/sql/p3.05-index-scan.slt
+./bin/bustub-sqllogictest ../test/sql/p3.06-empty-table.slt
+
+# NestedLoopJoin
+./bin/bustub-sqllogictest ../test/sql/p3.07-simple-agg.slt
+./bin/bustub-sqllogictest ../test/sql/p3.08-group-agg-1.slt
+./bin/bustub-sqllogictest ../test/sql/p3.09-group-agg-2.slt
+./bin/bustub-sqllogictest ../test/sql/p3.10-simple-join.slt
+./bin/bustub-sqllogictest ../test/sql/p3.11-multi-way-join.slt
+./bin/bustub-sqllogictest ../test/sql/p3.12-repeat-execute.slt
+
+# Task 2
+./bin/bustub-sqllogictest ../test/sql/p3.14-hash-join.slt
+./bin/bustub-sqllogictest ../test/sql/p3.15-multi-way-hash-join.slt
+
+# Task 3
+./bin/bustub-sqllogictest ../test/sql/p3.16-sort-limit.slt
+./bin/bustub-sqllogictest ../test/sql/p3.17-topn.slt
+./bin/bustub-sqllogictest ../test/sql/p3.18-integration-1.slt
+./bin/bustub-sqllogictest ../test/sql/p3.19-integration-2.slt
+```
+
+### 3. task
+
+#### 1. SeqScan
+
+```
+bustub> CREATE TABLE t1(v1 INT, v2 VARCHAR(100));
+Table created with id = 15
+
+bustub> EXPLAIN (o,s) SELECT * FROM t1;
+=== OPTIMIZER ===
+SeqScan { table=t1 } | (t1.v1:INTEGER, t1.v2:VARCHAR)
+```
+
+#### 2. Insert
+
+```
+bustub> CREATE TABLE t1(v1 INT, v2 VARCHAR(100));
+
+bustub> EXPLAIN (o,s) INSERT INTO t1 VALUES (1, 'a'), (2, 'b');
+=== OPTIMIZER ===
+Insert { table_oid=15 } | (__bustub_internal.insert_rows:INTEGER)
+  Values { rows=2 } | (__values#0.0:INTEGER, __values#0.1:VARCHAR)
+```
+
+`InsertExecutor`将元组插入到表中并更新任何受影响的索引。它只有一个子节点生成要插入到表中的值。规划器将确保值与表具有相同的模式。执行器将生成一个整数类型的元组作为输出，指示有多少行已插入到表中。如果有索引与之关联，请记住在插入到表中时更新索引。
+
+提示：您只需在创建或修改`is_delete_`时更改`TupleMeta`字段。对于`insertion_txn_`和`deletion_txn_`字段，只需将其设置为`INVALID_TXN_ID`。这些字段旨在用于未来的学期，我们可能会切换到MVCC存储。
+
+#### 3. Update
+
+```
+bustub> CREATE TABLE t1(v1 INT, v2 VARCHAR(100));
+bustub> explain (o,s) update test_1 set colB = 15445;
+=== OPTIMIZER ===
+Update { table_oid=20, target_exprs=[#0.0, 15445, #0.2, #0.3] } | (__bustub_internal.update_rows:INTEGER)
+  SeqScan { table=test_1 } | (test_1.colA:INTEGER, test_1.colB:INTEGER, test_1.colC:INTEGER, test_1.colD:INTEGER)
 ```
 

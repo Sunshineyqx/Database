@@ -24,7 +24,7 @@ SeqScanExecutor::~SeqScanExecutor(){
 }
 
 void SeqScanExecutor::Init() {
-    std::cout << "SeqScanExecutor::Init()" << '\n';
+    // std::cout << "SeqScanExecutor::Init()" << '\n';
     auto catalog = exec_ctx_->GetCatalog();
     auto table_info = catalog->GetTable(plan_->GetTableOid());
     // hash join 的时候, seqscan 作为 right_child 会被多次调用 Init()
