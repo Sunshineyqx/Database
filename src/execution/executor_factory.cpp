@@ -41,7 +41,7 @@
 #include "execution/plans/topn_plan.h"
 #include "execution/plans/values_plan.h"
 #include "storage/index/generic_key.h"
-
+// 根据执行计划创建执行器
 namespace bustub {
 
 auto ExecutorFactory::CreateExecutor(ExecutorContext *exec_ctx, const AbstractPlanNodeRef &plan)

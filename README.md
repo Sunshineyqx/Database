@@ -311,3 +311,28 @@ info locals 查看变量信息
 p xx 打印变量
 layout split 同时显示源代码和汇编代码窗口。
 ```
+
+
+
+---
+
+## 3. Project3: 查询执行
+
+### 1. Bustub Shell
+
+```
+cd build && make -j8 shell
+./bin/bustub-shell
+
+ \dt: show all tables                                                             
+ \di: show all indices                                                            
+ \help: show this message again    
+```
+
+### 2. Test
+
+```
+make -j8 sqllogictest
+./bin/bustub-sqllogictest ../test/sql/p3.00-primer.slt --verbose
+```
+
