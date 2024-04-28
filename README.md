@@ -362,7 +362,7 @@ make -j8 sqllogictest
 ./bin/bustub-sqllogictest ../test/sql/p3.19-integration-2.slt
 ```
 
-### 3. task
+### 3. task 1.
 
 #### 1. SeqScan
 
@@ -401,3 +401,75 @@ Update { table_oid=20, target_exprs=[#0.0, 15445, #0.2, #0.3] } | (__bustub_inte
 
 提示：要实现更新，首先删除受影响的元组，然后插入一个新的元组。不要使用`TableHeap``UpdateTupleInplaceUnsafe`函数，除非你正在为项目4实现排行榜优化。
 
+
+
+#### 4. Delete
+
+```
+bustub> CREATE TABLE t1(v1 INT, v2 VARCHAR(100));
+bustub> EXPLAIN (o,s) DELETE FROM t1;
+=== OPTIMIZER ===
+Delete { table_oid=15 } | (__bustub_internal.delete_rows:INTEGER)
+  Filter { predicate=true } | (t1.v1:INTEGER, t1.v2:VARCHAR)
+    SeqScan { table=t1 } | (t1.v1:INTEGER, t1.v2:VARCHAR)
+
+bustub> EXPLAIN (o,s) DELETE FROM t1 where v1 = 1;
+=== OPTIMIZER ===
+Delete { table_oid=15 } | (__bustub_internal.delete_rows:INTEGER)
+  Filter { predicate=#0.0=1 } | (t1.v1:INTEGER, t1.v2:VARCHAR)
+    SeqScan { table=t1 } | (t1.v1:INTEGER, t1.v2:VARCHAR)
+```
+
+提示：要删除一个元组，你需要从子执行器获取一个`RID`，并更新该元组对应[的`is_deleted_`](https://github.com/cmu-db/bustub/blob/master/src/include/storage/table/tuple.h)的`TupleMeta`字段。
+
+所有删除操作都将在事务提交时应用。
+
+
+
+#### 5.IndexScan
+
+你可以通过`SELECT FROM <table> ORDER BY <index column>`测试你的索引扫描执行器。我们将在[任务3](https://15445.courses.cs.cmu.edu/spring2023/project3/#task3)中解释为什么`ORDER BY`可以转换为`IndexScan`。
+
+```
+bustub> CREATE TABLE t2(v3 int, v4 int);
+Table created with id = 16
+
+bustub> CREATE INDEX t2v3 ON t2(v3);
+Index created with id = 0
+
+bustub> EXPLAIN (o,s) SELECT * FROM t2 ORDER BY v3;
+=== OPTIMIZER ===
+IndexScan { index_oid=0 } | (t2.v3:INTEGER, t2.v4:INTEGER)
+```
+
+plan中索引对象的类型在此项目中将始终为`BPlusTreeIndexForTwoIntegerColumn`。您可以安全地将其转换并存储在executor对象中：
+
+```
+tree_ = dynamic_cast<BPlusTreeIndexForTwoIntegerColumn *>(index_info_->index_.get())
+```
+
+然后可以从索引对象构造索引迭代器，扫描所有键和元组ID，从table_heap中查找元组，并按顺序发出所有元组。
+
+BusTub仅支持具有单个唯一整数列的索引。我们的测试用例不会包含重复的键。
+
+注意：我们永远不会在有索引的表中插入重复的行。
+
+
+
+### Task 2. 
+
+Aggregation & Join Executors 
+
+聚合连接执行器
+
+在此任务中，您将添加**一个聚合执行器、几个连接执行器**，并允许优化器在规划一个查询时可以在嵌套循环连接(**nested loop join**)和散列连接(**hash join**)之间进行选择。 您将在以下文件中完成实现：
+
+- `src/include/execution/aggregation_executor.h`
+- `src/execution/aggregation_executor.cpp`
+- `src/include/execution/nested_loop_join_executor.h`
+- `src/execution/nested_loop_join_executor.cpp`
+- `src/include/execution/hash_join_executor.h`
+- `src/execution/hash_join_executor.cpp`
+- `src/optimizer/nlj_as_hash_join.cpp`
+
+#### 1. 
