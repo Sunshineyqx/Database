@@ -393,10 +393,11 @@ Insert { table_oid=15 } | (__bustub_internal.insert_rows:INTEGER)
 #### 3. Update
 
 ```
-bustub> CREATE TABLE t1(v1 INT, v2 VARCHAR(100));
 bustub> explain (o,s) update test_1 set colB = 15445;
 === OPTIMIZER ===
 Update { table_oid=20, target_exprs=[#0.0, 15445, #0.2, #0.3] } | (__bustub_internal.update_rows:INTEGER)
   SeqScan { table=test_1 } | (test_1.colA:INTEGER, test_1.colB:INTEGER, test_1.colC:INTEGER, test_1.colD:INTEGER)
 ```
+
+提示：要实现更新，首先删除受影响的元组，然后插入一个新的元组。不要使用`TableHeap``UpdateTupleInplaceUnsafe`函数，除非你正在为项目4实现排行榜优化。
 
