@@ -472,4 +472,28 @@ Aggregation & Join Executors
 - `src/execution/hash_join_executor.cpp`
 - `src/optimizer/nlj_as_hash_join.cpp`
 
-#### 1. 
+每个子任务如下所述。
+
+#### 1. Aggregation 聚合
+
+[`AggregationPlanNode`](https://github.com/cmu-db/bustub/blob/master/src/include/execution/plans/aggregation_plan.h)用于支持以下查询：
+
+```
+EXPLAIN SELECT colA, MIN(colB) FROM __mock_table_1 GROUP BY colA;
+EXPLAIN SELECT COUNT(colA), min(colB) FROM __mock_table_1;
+EXPLAIN SELECT colA, MIN(colB) FROM __mock_table_1 GROUP BY colA HAVING MAX(colB) > 10;
+EXPLAIN SELECT DISTINCT colA, colB FROM __mock_table_1;
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
