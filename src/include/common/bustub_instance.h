@@ -271,6 +271,7 @@ class BustubInstance {
   }
 
   auto IsForceStarterRule() -> bool {
+    // return true; // debug
     auto variable = StringUtil::Lower(GetSessionVariable("force_optimizer_starter_rule"));
     return variable == "1" || variable == "true" || variable == "yes";
   }
