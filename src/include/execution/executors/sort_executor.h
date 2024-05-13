@@ -56,6 +56,5 @@ class SortExecutor : public AbstractExecutor {
   std::unique_ptr<AbstractExecutor> child_executor_;
   std::vector<std::pair<Tuple, RID>> ordered_pairs_;
   std::vector<std::pair<Tuple, RID>>::iterator cur_iterator_;
-  bool is_sorted_;
 };
 }  // namespace bustub

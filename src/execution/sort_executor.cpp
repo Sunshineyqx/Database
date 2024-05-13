@@ -5,13 +5,9 @@ namespace bustub {
 
 SortExecutor::SortExecutor(ExecutorContext *exec_ctx, const SortPlanNode *plan,
                            std::unique_ptr<AbstractExecutor> &&child_executor)
-    : AbstractExecutor(exec_ctx), plan_(plan), child_executor_(std::move(child_executor)), is_sorted_(false) {}
+    : AbstractExecutor(exec_ctx), plan_(plan), child_executor_(std::move(child_executor)) {}
 
 void SortExecutor::Init() {
-  if (is_sorted_) {
-    return;
-  }
-
   child_executor_->Init();
   ordered_pairs_.clear();
 
@@ -45,7 +41,6 @@ void SortExecutor::Init() {
 
   std::sort(ordered_pairs_.begin(), ordered_pairs_.end(), sort_by);
   cur_iterator_ = ordered_pairs_.begin();
-  is_sorted_ = true;
 }
 
 auto SortExecutor::Next(Tuple *tuple, RID *rid) -> bool {
