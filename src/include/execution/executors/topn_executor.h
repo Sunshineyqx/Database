@@ -67,7 +67,7 @@ class TopNExecutor : public AbstractExecutor {
   /** The child executor from which tuples are obtained */
   std::unique_ptr<AbstractExecutor> child_executor_;
 
-  size_t count_;
+  size_t count_{0};
   std::vector<std::pair<Tuple, RID>> vec_;
 };
 }  // namespace bustub

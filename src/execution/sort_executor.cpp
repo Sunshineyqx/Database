@@ -44,14 +44,14 @@ void SortExecutor::Init() {
 }
 
 auto SortExecutor::Next(Tuple *tuple, RID *rid) -> bool {
-    if(cur_iterator_ == ordered_pairs_.end()){
-        return false;
-    }
-    auto& res = *cur_iterator_;
-    cur_iterator_++;
-    *tuple = res.first;
-    *rid = res.second;
-    return true;
+  if (cur_iterator_ == ordered_pairs_.end()) {
+    return false;
+  }
+  auto &res = *cur_iterator_;
+  cur_iterator_++;
+  *tuple = res.first;
+  *rid = res.second;
+  return true;
 }
 
 }  // namespace bustub

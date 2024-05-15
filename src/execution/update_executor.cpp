@@ -39,7 +39,7 @@ auto UpdateExecutor::Next(Tuple *tuple, RID *rid) -> bool {
 
   int num_inserted = 0;
   while (child_executor_->Next(tuple, rid)) {
-    // 先删除 
+    // 先删除
     TupleMeta tuple_meta = {INVALID_TXN_ID, INVALID_TXN_ID, true};
     table_info_->table_->UpdateTupleMeta(tuple_meta, *rid);
 
@@ -52,7 +52,8 @@ auto UpdateExecutor::Next(Tuple *tuple, RID *rid) -> bool {
     }
     Tuple new_tuple{values, &table_info_->schema_};
     tuple_meta.is_deleted_ = false;
-    std::optional<RID> res = table_info_->table_->InsertTuple(tuple_meta, new_tuple, exec_ctx_->GetLockManager(), exec_ctx_->GetTransaction(), plan_->TableOid());
+    std::optional<RID> res = table_info_->table_->InsertTuple(tuple_meta, new_tuple, exec_ctx_->GetLockManager(),
+                                                              exec_ctx_->GetTransaction(), plan_->TableOid());
     if (!res.has_value()) {
       return false;
     }
@@ -65,7 +66,7 @@ auto UpdateExecutor::Next(Tuple *tuple, RID *rid) -> bool {
       index->index_->DeleteEntry(removed_key, *rid, exec_ctx_->GetTransaction());
       // 增加新索引
       Tuple new_key = new_tuple.KeyFromTuple(table_info_->schema_, index->key_schema_, index->index_->GetKeyAttrs());
-      if(!index->index_->InsertEntry(new_key, res.value(), exec_ctx_->GetTransaction())){
+      if (!index->index_->InsertEntry(new_key, res.value(), exec_ctx_->GetTransaction())) {
         return false;
       }
     }

@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
 #include "catalog/catalog.h"
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
@@ -58,9 +59,9 @@ class InsertExecutor : public AbstractExecutor {
  private:
   /** The insert plan node to be executed*/
   const InsertPlanNode *plan_;
-  std::unique_ptr<AbstractExecutor> child_executor_; // my
-  TableInfo* table_info_; // my
-  std::vector<IndexInfo *> index_info_; // my
+  std::unique_ptr<AbstractExecutor> child_executor_;  // my
+  TableInfo *table_info_;                             // my
+  std::vector<IndexInfo *> index_info_;               // my
   bool has_finished_;
 };
 

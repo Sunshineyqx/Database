@@ -49,7 +49,7 @@ class Optimizer {
    */
   auto OptimizeNLJAsHashJoin(const AbstractPlanNodeRef &plan) -> AbstractPlanNodeRef;
   void OutputExpresions(const ComparisonExpression *expr, std::vector<AbstractExpressionRef> &left_exprs,
-                                 std::vector<AbstractExpressionRef> &right_exprs);
+                        std::vector<AbstractExpressionRef> &right_exprs);
   /**
    * @brief optimize nested loop join into index join.
    */

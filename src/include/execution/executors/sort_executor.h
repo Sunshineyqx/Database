@@ -13,8 +13,8 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 #include <vector>
-
 #include "common/rid.h"
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"

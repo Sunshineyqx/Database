@@ -84,15 +84,15 @@ void Optimizer::OutputExpresions(const ComparisonExpression *expr, std::vector<A
   // std::cout << "expr->ToString(): " << expr->ToString() << std::endl << std::endl;
   if (const auto *left_col_expr = dynamic_cast<const ColumnValueExpression *>(expr->children_[0].get());
       left_col_expr != nullptr) {
-        // std::cout << "left_col_expr: "<< left_col_expr->ToString() << std::endl << std::endl;
+    // std::cout << "left_col_expr: "<< left_col_expr->ToString() << std::endl << std::endl;
     if (const auto *right_col_expr = dynamic_cast<const ColumnValueExpression *>(expr->children_[1].get());
         right_col_expr != nullptr) {
-        // std::cout << "right_col_expr " << right_col_expr->ToString() << std::endl << std::endl;
+      // std::cout << "right_col_expr " << right_col_expr->ToString() << std::endl << std::endl;
       auto left_expr_tuple_0 =
           std::make_shared<ColumnValueExpression>(0, left_col_expr->GetColIdx(), left_col_expr->GetReturnType());
       auto right_expr_tuple_0 =
           std::make_shared<ColumnValueExpression>(0, right_col_expr->GetColIdx(), right_col_expr->GetReturnType());
-        
+
       // std::cout << "left_expr_tuple_0: " << left_expr_tuple_0->ToString() << std::endl << std::endl;
       // std::cout << "right_expr_tuple_0: " << right_expr_tuple_0->ToString() << std::endl << std::endl;
 
@@ -107,11 +107,11 @@ void Optimizer::OutputExpresions(const ComparisonExpression *expr, std::vector<A
       /*
       std::cout << "left_exprs: ";
       for(auto& it : left_exprs){
-        std::cout << it->ToString() << "   "; 
+        std::cout << it->ToString() << "   ";
       }
       std::cout << std::endl << std::endl << "right_exprs: ";
       for(auto& it : right_exprs){
-        std::cout << it->ToString() << "   "; 
+        std::cout << it->ToString() << "   ";
       }
       std::cout << std::endl << std::endl;
       */

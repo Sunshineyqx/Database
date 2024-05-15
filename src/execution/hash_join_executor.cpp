@@ -23,7 +23,10 @@ namespace bustub {
 HashJoinExecutor::HashJoinExecutor(ExecutorContext *exec_ctx, const HashJoinPlanNode *plan,
                                    std::unique_ptr<AbstractExecutor> &&left_child,
                                    std::unique_ptr<AbstractExecutor> &&right_child)
-    : AbstractExecutor(exec_ctx),plan_(plan), left_executor_(std::move(left_child)), right_executor_(std::move(right_child)) {
+    : AbstractExecutor(exec_ctx),
+      plan_(plan),
+      left_executor_(std::move(left_child)),
+      right_executor_(std::move(right_child)) {
   if (plan->GetJoinType() != JoinType::LEFT && plan->GetJoinType() != JoinType::INNER) {
     // Note for 2023 Spring: You ONLY need to implement left join and inner join.
     throw bustub::NotImplementedException(fmt::format("join type {} not supported", plan->GetJoinType()));
@@ -80,16 +83,16 @@ auto HashJoinExecutor::Next(Tuple *tuple, RID *rid) -> bool {
     return true;
   }
 }
-auto HashJoinExecutor::OutputTuple(const Schema &left_table_schema, const Schema &right_table_schema, Tuple *right_tuple,
-                                   Tuple *tuple, bool matched)->void{
+auto HashJoinExecutor::OutputTuple(const Schema &left_table_schema, const Schema &right_table_schema,
+                                   Tuple *right_tuple, Tuple *tuple, bool matched) -> void {
   std::vector<Value> values;
   values.reserve(GetOutputSchema().GetColumnCount());
-  for(uint32_t i = 0; i < left_table_schema.GetColumnCount(); i++){
+  for (uint32_t i = 0; i < left_table_schema.GetColumnCount(); i++) {
     values.emplace_back(left_tuple_.GetValue(&left_table_schema, i));
   }
 
-  if(!matched){
-     for (uint32_t i = 0; i < right_table_schema.GetColumnCount(); ++i) {
+  if (!matched) {
+    for (uint32_t i = 0; i < right_table_schema.GetColumnCount(); ++i) {
       auto type_id = right_table_schema.GetColumn(i).GetType();
       values.emplace_back(ValueFactory::GetNullValueByType(type_id));
     }

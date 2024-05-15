@@ -7,7 +7,7 @@ namespace bustub {
 
 TopNExecutor::TopNExecutor(ExecutorContext *exec_ctx, const TopNPlanNode *plan,
                            std::unique_ptr<AbstractExecutor> &&child_executor)
-    : AbstractExecutor(exec_ctx), plan_(plan), child_executor_(std::move(child_executor)), count_(0) {}
+    : AbstractExecutor(exec_ctx), plan_(plan), child_executor_(std::move(child_executor)) {}
 
 void TopNExecutor::Init() {
   count_ = 0;
@@ -40,15 +40,15 @@ void TopNExecutor::Init() {
   Tuple tuple;
   RID rid;
   size_t n = GetNumInHeap();
-  while(child_executor_->Next(&tuple, &rid)){
+  while (child_executor_->Next(&tuple, &rid)) {
     heap.emplace(tuple, rid);
-    if(heap.size() > n){
-        heap.pop();
+    if (heap.size() > n) {
+      heap.pop();
     }
   }
   // std::cout << heap.size() << std::endl;
   // copy to my vec...
-  while(!heap.empty()){
+  while (!heap.empty()) {
     auto pair = heap.top();
     heap.pop();
     // std::cout << pair.first.ToString(&plan_->OutputSchema()) << " " << pair.second.ToString() << std::endl;
@@ -58,14 +58,14 @@ void TopNExecutor::Init() {
 }
 
 auto TopNExecutor::Next(Tuple *tuple, RID *rid) -> bool {
-    if(count_ >= vec_.size()){
-        return false;
-    }
-    auto& pair = vec_.at(count_);
-    count_++;
-    *tuple = pair.first;
-    *rid = pair.second;
-    return true;
+  if (count_ >= vec_.size()) {
+    return false;
+  }
+  auto &pair = vec_.at(count_);
+  count_++;
+  *tuple = pair.first;
+  *rid = pair.second;
+  return true;
 }
 
 auto TopNExecutor::GetNumInHeap() -> size_t { return plan_->GetN(); };

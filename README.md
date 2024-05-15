@@ -57,7 +57,7 @@ $ ./test/trie_store_noncopy_test
 #### 检测格式
 
 ```
-make format && make check-lint && make check-clang-tidy-p2
+make format && make check-lint && make check-clang-tidy-p3
 ```
 
 
@@ -65,7 +65,7 @@ make format && make check-lint && make check-clang-tidy-p2
 #### 提交
 
 ```
-make submit-p2
+make submit-p3
 ```
 
 

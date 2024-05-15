@@ -23,8 +23,7 @@ AggregationExecutor::AggregationExecutor(ExecutorContext *exec_ctx, const Aggreg
       plan_(plan),
       child_(std::move(child)),
       aht_(plan->GetAggregates(), plan->GetAggregateTypes()),
-      aht_iterator_(aht_.Begin()),
-      num_of_tuples_(0) {}
+      aht_iterator_(aht_.Begin()) {}
 
 void AggregationExecutor::Init() {
   child_->Init();

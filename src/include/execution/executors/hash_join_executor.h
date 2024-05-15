@@ -15,7 +15,7 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
-
+#include <vector>
 #include "common/util/hash_util.h"
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
@@ -93,8 +93,8 @@ class HashJoinExecutor : public AbstractExecutor {
 
  private:
   /** MyADD: @return The tuple as an JoinKey */
-  auto MakeJoinKey(const Tuple &tuple, const std::vector<AbstractExpressionRef> &exprs,
-                        const AbstractPlanNodeRef &plan) -> JoinKey {
+  auto MakeJoinKey(const Tuple &tuple, const std::vector<AbstractExpressionRef> &exprs, const AbstractPlanNodeRef &plan)
+      -> JoinKey {
     std::vector<Value> keys;
     keys.reserve(exprs.size());
     for (const auto &expr : exprs) {
@@ -103,12 +103,10 @@ class HashJoinExecutor : public AbstractExecutor {
     return {keys};
   }
 
-  auto InsertJoinKey(const JoinKey& join_key, const Tuple& tuple) -> void{
-    ht_.insert({join_key, tuple});
-  }
+  auto InsertJoinKey(const JoinKey &join_key, const Tuple &tuple) -> void { ht_.insert({join_key, tuple}); }
 
-  auto OutputTuple(const Schema &left_table_schema, const Schema &right_table_schema, Tuple *right_tuple,
-                                   Tuple *tuple, bool matched) -> void;  
+  auto OutputTuple(const Schema &left_table_schema, const Schema &right_table_schema, Tuple *right_tuple, Tuple *tuple,
+                   bool matched) -> void;
 
  private:
   /** The NestedLoopJoin plan node to be executed. */
@@ -118,7 +116,8 @@ class HashJoinExecutor : public AbstractExecutor {
 
   std::unordered_multimap<JoinKey, Tuple> ht_;
   Tuple left_tuple_;
-  std::pair<std::unordered_multimap<JoinKey, Tuple>::iterator, std::unordered_multimap<JoinKey, Tuple>::iterator> range_pair_it_;
+  std::pair<std::unordered_multimap<JoinKey, Tuple>::iterator, std::unordered_multimap<JoinKey, Tuple>::iterator>
+      range_pair_it_;
   std::unordered_multimap<JoinKey, Tuple>::iterator cur_it_;
   bool is_begin_;
   bool bucket_finished_;

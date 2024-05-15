@@ -73,18 +73,19 @@ class SimpleAggregationHashTable {
    */
   void CombineAggregateValues(AggregateValue *result, const AggregateValue &input) {
     for (uint32_t i = 0; i < agg_exprs_.size(); i++) {
-      Value& cur_aggregate_value = result->aggregates_[i];
-      const Value& new_aggregate_value = input.aggregates_[i];
+      Value &cur_aggregate_value = result->aggregates_[i];
+      const Value &new_aggregate_value = input.aggregates_[i];
       // 边界情况
-      if (agg_types_[i] == AggregationType::CountStarAggregate){
+      if (agg_types_[i] == AggregationType::CountStarAggregate) {
         cur_aggregate_value = cur_aggregate_value.Add({TypeId::INTEGER, 1});
         continue;
       }
-      if (new_aggregate_value.IsNull()){
+      if (new_aggregate_value.IsNull()) {
         continue;
       }
-      if (cur_aggregate_value.IsNull()){
-        cur_aggregate_value = (agg_types_[i] == AggregationType::CountAggregate) ? Value{TypeId::INTEGER, 1} : new_aggregate_value;
+      if (cur_aggregate_value.IsNull()) {
+        cur_aggregate_value =
+            (agg_types_[i] == AggregationType::CountAggregate) ? Value{TypeId::INTEGER, 1} : new_aggregate_value;
         continue;
       }
 
@@ -228,6 +229,6 @@ class AggregationExecutor : public AbstractExecutor {
   SimpleAggregationHashTable aht_;
   /** Simple aggregation hash table iterator */
   SimpleAggregationHashTable::Iterator aht_iterator_;
-  int num_of_tuples_;
+  int num_of_tuples_{0};
 };
 }  // namespace bustub
