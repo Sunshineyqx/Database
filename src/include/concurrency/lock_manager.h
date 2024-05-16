@@ -65,7 +65,7 @@ class LockManager {
   class LockRequestQueue {
    public:
     /** List of lock requests for the same resource (table or row) */
-    std::list<LockRequest *> request_queue_;
+    std::list<std::shared_ptr<LockRequest>> request_queue_; // 原来是裸指针...
     /** For notifying blocked transactions on this rid */
     std::condition_variable cv_;
     /** txn_id of an upgrading transaction (if any) */
@@ -308,17 +308,25 @@ class LockManager {
   auto RunCycleDetection() -> void;
 
   TransactionManager *txn_manager_;
+ /* my helper func*/
+ private:
+  void ThrowAbort(Transaction* txn, AbortReason reason); // wait
+  void DeleteTxnLockTable(Transaction* txn, LockMode lock_mode, table_oid_t oid); // wait
+  void InsertTxnLockTable(Transaction* txn, LockMode lock_mode, table_oid_t oid); // wait
+  auto GrantAllowed(Transaction *txn, const std::shared_ptr<LockRequestQueue> &lock_request_queue, LockMode lock_mode) -> bool;
+  void InsertTxnLockRow(Transaction *txn, LockMode lock_mode, const table_oid_t &oid, const RID &rid);
+  void DeleteTxnLockRow(Transaction *txn, LockMode lock_mode, const table_oid_t &oid, const RID &rid);
 
  private:
   /** Spring 2023 */
   /* You are allowed to modify all functions below. */
   auto UpgradeLockTable(Transaction *txn, LockMode lock_mode, const table_oid_t &oid) -> bool;
   auto UpgradeLockRow(Transaction *txn, LockMode lock_mode, const table_oid_t &oid, const RID &rid) -> bool;
-  auto AreLocksCompatible(LockMode l1, LockMode l2) -> bool;
+  auto AreLocksCompatible(LockMode l1, LockMode l2) -> bool; // ok
   auto CanTxnTakeLock(Transaction *txn, LockMode lock_mode) -> bool;
   void GrantNewLocksIfPossible(LockRequestQueue *lock_request_queue);
-  auto CanLockUpgrade(LockMode curr_lock_mode, LockMode requested_lock_mode) -> bool;
-  auto CheckAppropriateLockOnTable(Transaction *txn, const table_oid_t &oid, LockMode row_lock_mode) -> bool;
+  auto CanLockUpgrade(LockMode curr_lock_mode, LockMode requested_lock_mode) -> bool; // ok
+  auto CheckAppropriateLockOnTable(Transaction *txn, const table_oid_t &oid, LockMode row_lock_mode) -> bool; // ok
   auto FindCycle(txn_id_t source_txn, std::vector<txn_id_t> &path, std::unordered_set<txn_id_t> &on_path,
                  std::unordered_set<txn_id_t> &visited, txn_id_t *abort_txn_id) -> bool;
   void UnlockAll();

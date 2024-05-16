@@ -485,6 +485,111 @@ EXPLAIN SELECT colA, MIN(colB) FROM __mock_table_1 GROUP BY colA HAVING MAX(colB
 EXPLAIN SELECT DISTINCT colA, colB FROM __mock_table_1;
 ```
 
+...
+
+---
+
+## Project4 并发控制
+
+在这个项目中，您将通过添加一个锁管理器，然后使用它来执行并发查询，从而在BusTub中添加对事务的支持。锁管理器将支持五种锁模式下的表锁和元组锁：意图共享、意图独占、共享意图独占、共享和独占。
+
+锁管理器将处理来自事务的锁请求，向事务授予锁，并根据事务的隔离级别检查锁是否被适当地释放。
+
+参考https://blog.csdn.net/hey_we_go_/article/details/134428594
+
+### 小知识
+
+#### 锁类型及其作用
+
+1. **SHARED (S) 共享锁**：
+   - 允许多个事务同时读取同一资源（表或行）。
+   - 不允许任何事务修改该资源。
+
+2. **EXCLUSIVE (X) 排他锁**：
+   - 允许一个事务读取和修改资源。
+   - 不允许其他事务获取任何类型的锁（包括共享锁）在该资源上。
+
+3. **INTENTION_SHARED (IS) 意向共享锁**：
+   - 用于表级锁，表示事务打算获取某些行的共享锁。
+   - 允许多个事务获取 IS 锁，但必须与表的共享锁兼容。
+
+4. **INTENTION_EXCLUSIVE (IX) 意向排他锁**：
+   - 用于表级锁，表示事务打算获取某些行的排他锁。
+   - 允许多个事务获取 IX 锁，但必须与表的排他锁兼容。
+
+5. **SHARED_INTENTION_EXCLUSIVE (SIX) 共享意向排他锁**：
+   - 用于表级锁，表示事务已经拥有表的共享锁，并打算获取某些行的排他锁。
+   - 一个表上只能有一个 SIX 锁，其他事务只能获取兼容的锁（ IS 锁）。
+
+#### 锁的兼容性矩阵
+
+下表显示了各种锁之间的兼容性：
+
+|         | S       | X    | IS      | IX      | SIX  |
+| ------- | ------- | ---- | ------- | ------- | ---- |
+| **S**   | **Yes** | No   | **Yes** | No      | No   |
+| **X**   | No      | No   | No      | No      | No   |
+| **IS**  | **Yes** | No   | **Yes** | **Yes** | No   |
+| **IX**  | No      | No   | **Yes** | **Yes** | No   |
+| **SIX** | No      | No   | **Yes** | No      | No   |
+
+#### 兼容性说明
+
+- **共享锁（S）**：可以与其他共享锁（S）和意向共享锁（IS）兼容，但不能与排他锁（X）、意向排他锁（IX）或共享意向排他锁（SIX）兼容。
+- **排他锁（X）**：不与任何其他类型的锁兼容。
+- **意向共享锁（IS）**：可以与共享锁（S）、意向共享锁（IS）和意向排他锁（IX）兼容，但不能与排他锁（X）或共享意向排他锁（SIX）兼容。
+- **意向排他锁（IX）**：可以与意向共享锁（IS）和意向排他锁（IX）兼容，但不能与共享锁（S）、排他锁（X）或共享意向排他锁（SIX）兼容。
+- **共享意向排他锁（SIX）**：IS兼容
+
+#### 详细说明
+
+1. **共享锁（S）**：允许多个事务读取资源，但不允许任何修改。
+   - 兼容：S, IS
+   - 不兼容：X, IX, SIX
+
+2. **排他锁（X）**：只允许一个事务读取和修改资源。
+   - 不兼容任何其他锁。
+
+3. **意向共享锁（IS）**：用于表级别，表示事务打算获取行级别的共享锁。
+   - 兼容：S, IS, IX
+   - 不兼容：X, SIX
+
+4. **意向排他锁（IX）**：用于表级别，表示事务打算获取行级别的排他锁。
+   - 兼容：IS, IX
+   - 不兼容：S, X, SIX
+
+5. **共享意向排他锁（SIX）**：用于表级别，表示事务已经获取了共享锁，并打算获取行级别的排他锁。
+   - 兼容: IS
+
+通过理解这些锁类型及其兼容性，可以帮助更好地管理并发事务，确保数据一致性和隔离性。在实际应用中，这些锁用于实现多级锁定协议（Multigranularity Locking Protocol），以提高数据库系统的并发性能和灵活性。
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/51a53a89d7aa43179acba9bb1694a2f5.jpeg#pic_center)
+
+#### **为什么需要 SIX 锁？**
+
+什么是共享意向排它锁？它与IS IX S X之间的相容矩阵是怎样的？ - 黄金架构师的回答 - 知乎
+https://www.zhihu.com/question/437451897/answer/2312015597
+
+
+
+## Test
+
+```
+cd build
+make lock_manager_test -j`nproc`
+make deadlock_detection_test -j`nproc`
+make txn_integration_test -j`nproc`
+./test/lock_manager_test
+./test/deadlock_detection_test
+./test/txn_integration_test
+```
+
+
+
+----
+
+### 1.  Task1: 锁管理器
+
 
 
 
