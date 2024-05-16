@@ -120,8 +120,6 @@ auto LockManager::LockTable(Transaction *txn, LockMode lock_mode, const table_oi
   while (true) {
     if (GrantAllowed(txn, request_queue, lock_mode)) {
       new_request->granted_ = true;
-      // 其实在这里可以释放队列锁了吧...下面的txn的更新要获取txn锁...没必要嵌套吧。
-      que_lock.unlock();
       InsertTxnLockTable(txn, lock_mode, oid);
       return true;
     }
@@ -310,8 +308,6 @@ auto LockManager::LockRow(Transaction *txn, LockMode lock_mode, const table_oid_
         if (GrantAllowed(txn, request_queue, lock_mode)) {
           new_request->granted_ = true;
           request_queue->upgrading_ = INVALID_TXN_ID;
-          // 提前释放..
-          que_lock.unlock();
           InsertTxnLockRow(txn, lock_mode, oid, rid);
           return true;
         }
