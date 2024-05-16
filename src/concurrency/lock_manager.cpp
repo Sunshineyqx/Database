@@ -103,7 +103,7 @@ auto LockManager::LockTable(Transaction *txn, LockMode lock_mode, const table_oi
         if (txn->GetState() == TransactionState::ABORTED) {  // 死锁检测可能会让事务abort并唤醒
           request_queue->request_queue_.remove(new_request);
           request_queue->upgrading_ = INVALID_TXN_ID;
-          que_lock.unlock();
+          // que_lock.unlock();
           request_queue->cv_.notify_all();
           return false;
         }
@@ -121,13 +121,14 @@ auto LockManager::LockTable(Transaction *txn, LockMode lock_mode, const table_oi
     if (GrantAllowed(txn, request_queue, lock_mode)) {
       new_request->granted_ = true;
       // 其实在这里可以释放队列锁了吧...下面的txn的更新要获取txn锁...没必要嵌套吧。
+      que_lock.unlock();
       InsertTxnLockTable(txn, lock_mode, oid);
       return true;
     }
     request_queue->cv_.wait(que_lock);
     if (txn->GetState() == TransactionState::ABORTED) {  // 死锁检测可能会让事务abort并唤醒
       request_queue->request_queue_.remove(new_request);
-      que_lock.unlock();
+      // que_lock.unlock();
       request_queue->cv_.notify_all();
       return false;
     }
@@ -309,6 +310,8 @@ auto LockManager::LockRow(Transaction *txn, LockMode lock_mode, const table_oid_
         if (GrantAllowed(txn, request_queue, lock_mode)) {
           new_request->granted_ = true;
           request_queue->upgrading_ = INVALID_TXN_ID;
+          // 提前释放..
+          que_lock.unlock();
           InsertTxnLockRow(txn, lock_mode, oid, rid);
           return true;
         }
